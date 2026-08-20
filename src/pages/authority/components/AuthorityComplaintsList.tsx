@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Card, Badge, Input } from '../../../components/ui'
 import { shortCode } from '../../citizen/components/ComplaintCard'
 import type { ComplaintRow } from '../../../types/complaint'
+import { useTheme } from '../../../context/ThemeContext'
 
 interface AuthorityComplaintsListProps {
   complaints: ComplaintRow[]
@@ -20,6 +21,8 @@ const statusBadgeMap: Record<string, any> = {
 }
 
 export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityComplaintsListProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [categoryFilter, setCategoryFilter] = useState('All')
@@ -49,7 +52,7 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <Card noPadding className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <Card noPadding className={`p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm border ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-100'}`}>
         <div className="w-full sm:w-64">
           <Input 
             id="search" 
@@ -60,14 +63,14 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <select 
-            className="rounded-lg border border-slate-200 p-2 text-sm bg-white focus:ring-2 focus:ring-primary outline-none flex-1"
+            className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             {STATUS_FILTERS.map(f => <option key={f} value={f}>{f} Status</option>)}
           </select>
           <select 
-            className="rounded-lg border border-slate-200 p-2 text-sm bg-white focus:ring-2 focus:ring-primary outline-none flex-1"
+            className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
@@ -78,7 +81,7 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
 
       <div className="space-y-3">
         {filteredComplaints.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 text-sm bg-white rounded-xl shadow-sm border border-slate-100">
+          <div className={`text-center py-12 text-sm rounded-xl shadow-sm border ${isDark ? 'bg-navy-900 text-slate-400 border-navy-800' : 'bg-white text-slate-500 border-slate-100'}`}>
             No complaints found matching the current filters.
           </div>
         ) : (
@@ -86,22 +89,22 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
             <div 
               key={c.id}
               onClick={() => onSelect(c)}
-              className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 bg-white hover:border-primary-200 hover:shadow-card-hover transition-all duration-200 cursor-pointer group"
+              className={`flex items-start gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer group hover:border-primary-200 hover:shadow-card-hover ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-100'}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="text-xs font-mono font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                  <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border ${isDark ? 'bg-navy-950 text-slate-400 border-navy-800' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
                     {shortCode(c.id)}
                   </span>
                   <Badge variant={statusBadgeMap[c.status] || 'default'} size="sm" />
-                  <span className="text-xs font-semibold text-slate-600">{c.category}</span>
+                  <span className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{c.category}</span>
                 </div>
                 
-                <p className="text-sm text-slate-700 line-clamp-2 mt-2 leading-relaxed">
+                <p className={`text-sm line-clamp-2 mt-2 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                   {c.description}
                 </p>
 
-                <div className="flex items-center gap-3 mt-3 text-[11px] text-slate-400 font-medium">
+                <div className={`flex items-center gap-3 mt-3 text-[11px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                   <span className="flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                       <path fillRule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clipRule="evenodd" />
@@ -118,7 +121,7 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
                   )}
                 </div>
               </div>
-              <div className="shrink-0 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 bg-primary-50 rounded-lg">
+              <div className={`shrink-0 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 rounded-lg ${isDark ? 'bg-primary-900/30 text-primary-400' : 'bg-primary-50'}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                   <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                 </svg>

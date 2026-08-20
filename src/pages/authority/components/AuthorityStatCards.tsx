@@ -1,3 +1,4 @@
+import { useTheme } from '../../../context/ThemeContext'
 import type { ComplaintRow } from '../../../types/complaint'
 
 interface AuthorityStatCardsProps {
@@ -5,6 +6,8 @@ interface AuthorityStatCardsProps {
 }
 
 export function AuthorityStatCards({ complaints }: AuthorityStatCardsProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const total = complaints.length
   const submitted = complaints.filter(c => c.status === 'submitted').length
   const inProgress = complaints.filter(c => c.status === 'in_progress').length
@@ -20,7 +23,7 @@ export function AuthorityStatCards({ complaints }: AuthorityStatCardsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
       {stats.map((s) => (
-        <div key={s.label} className="bg-white/10 backdrop-blur rounded-xl p-4 shadow-sm border border-white/20">
+        <div key={s.label} className={`rounded-xl p-4 shadow-sm border ${isDark ? 'bg-navy-800/50 border-navy-700/50' : 'bg-white/10 backdrop-blur border-white/20'}`}>
           <p className={['text-3xl font-bold', s.color === 'text-slate-800' ? 'text-white' : s.color].join(' ')}>
             {s.value}
           </p>

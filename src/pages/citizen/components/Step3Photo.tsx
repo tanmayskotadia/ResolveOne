@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Card, Button } from '../../../components/ui'
 import type { ComplaintData } from '../../../types/complaint'
+import { useTheme } from '../../../context/ThemeContext'
 
 interface Step3Props {
   data: ComplaintData
@@ -10,6 +11,8 @@ interface Step3Props {
 }
 
 export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [preview, setPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -45,12 +48,12 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card>
+      <Card className={isDark ? '!bg-navy-900 !border-navy-800' : ''}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">Add a Photo <span className="text-danger">*</span></h3>
-              <p className="text-xs text-slate-500 mt-0.5">Required to proceed.</p>
+              <h3 className={`text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>Add a Photo <span className="text-danger">*</span></h3>
+              <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Required to proceed.</p>
             </div>
             {preview && (
               <Button variant="ghost" size="sm" onClick={handleRemove} className="text-danger hover:text-red-700 hover:bg-red-50">
@@ -64,7 +67,7 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
               'relative w-full rounded-xl border-2 border-dashed transition-colors',
               preview 
                 ? 'border-transparent' 
-                : 'border-slate-200 hover:border-primary-300 bg-slate-50 hover:bg-primary-50 cursor-pointer flex flex-col items-center justify-center p-8'
+                : (isDark ? 'border-navy-700 hover:border-navy-500 bg-navy-950/50 hover:bg-navy-950 cursor-pointer flex flex-col items-center justify-center p-8' : 'border-slate-200 hover:border-primary-300 bg-slate-50 hover:bg-primary-50 cursor-pointer flex flex-col items-center justify-center p-8')
             ].join(' ')}
             onClick={() => !preview && fileInputRef.current?.click()}
           >
@@ -82,13 +85,13 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
               </div>
             ) : (
               <>
-                <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-primary">
+                <div className={`w-12 h-12 rounded-full shadow-sm flex items-center justify-center mb-3 ${isDark ? 'bg-navy-800' : 'bg-white'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-6 h-6 ${isDark ? 'text-primary-400' : 'text-primary'}`}>
                     <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-slate-700">Tap to upload a photo</span>
-                <span className="text-xs text-slate-400 mt-1">JPEG, PNG up to 5MB</span>
+                <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Tap to upload a photo</span>
+                <span className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>JPEG, PNG up to 5MB</span>
               </>
             )}
             

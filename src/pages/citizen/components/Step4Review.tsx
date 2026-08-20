@@ -4,6 +4,7 @@ import { Card, Button, Badge } from '../../../components/ui'
 import type { ComplaintData } from '../../../types/complaint'
 import { supabase } from '../../../lib/supabaseClient'
 import { useCitizen } from '../../../context/CitizenContext'
+import { useTheme } from '../../../context/ThemeContext'
 import toast from 'react-hot-toast'
 
 interface Step4Props {
@@ -12,6 +13,8 @@ interface Step4Props {
 }
 
 export function Step4Review({ data, onBack }: Step4Props) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const { citizenHash } = useCitizen()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -113,16 +116,16 @@ export function Step4Review({ data, onBack }: Step4Props) {
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Complaint Submitted Successfully!</h2>
-          <p className="text-slate-500 mt-2 text-sm max-w-xs mx-auto leading-relaxed">
+          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Complaint Submitted Successfully!</h2>
+          <p className={`mt-2 text-sm max-w-xs mx-auto leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             Your issue has been reported to the municipal authorities. You can track its progress anytime.
           </p>
         </div>
 
-        <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 w-full max-w-sm">
+        <div className={`border rounded-xl p-4 w-full max-w-sm ${isDark ? 'bg-primary-950/50 border-primary-900/50' : 'bg-primary-50 border-primary-200'}`}>
           <p className="text-xs text-primary-600 font-semibold uppercase tracking-wider mb-1">Your Complaint ID</p>
           <p className="text-2xl font-mono font-bold text-primary">{successId}</p>
-          <p className="text-xs text-slate-400 mt-2">Save this ID to track your complaint status</p>
+          <p className={`text-xs mt-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Save this ID to track your complaint status</p>
         </div>
 
         <div className="w-full max-w-sm space-y-3">
@@ -144,31 +147,31 @@ export function Step4Review({ data, onBack }: Step4Props) {
   return (
     <div className="space-y-6 animate-fade-in">
       {error && (
-        <div className="p-3 bg-red-50 text-danger text-sm rounded-lg border border-red-200">{error}</div>
+        <div className={`p-3 text-sm rounded-lg border ${isDark ? 'bg-red-950/30 text-red-400 border-red-900/50' : 'bg-red-50 text-danger border-red-200'}`}>{error}</div>
       )}
 
-      <h3 className="text-lg font-semibold text-slate-800">Review & Submit</h3>
+      <h3 className={`text-lg font-semibold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Review & Submit</h3>
 
-      <Card noPadding className="divide-y divide-slate-100">
+      <Card noPadding className={`divide-y ${isDark ? '!bg-navy-900 !border-navy-800 divide-navy-800' : 'divide-slate-100'}`}>
         <div className="p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Category & Source</p>
+          <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Category & Source</p>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="default" size="sm">{data.category}</Badge>
             {data.source === 'voice' && <Badge variant="pending" size="sm" dot={false}>🎙️ Voice Input</Badge>}
           </div>
         </div>
         <div className="p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Description</p>
-          <p className="text-sm text-slate-700 leading-relaxed">{data.description}</p>
+          <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Description</p>
+          <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{data.description}</p>
         </div>
         <div className="p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Location</p>
-          <p className="text-sm text-slate-700">{data.address || (data.lat ? `${data.lat?.toFixed(5)}, ${data.lng?.toFixed(5)}` : 'Not set')}</p>
+          <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Location</p>
+          <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{data.address || (data.lat ? `${data.lat?.toFixed(5)}, ${data.lng?.toFixed(5)}` : 'Not set')}</p>
         </div>
         {previewUrl && (
           <div className="p-4">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Photo</p>
-            <div className="w-24 h-24 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+            <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Photo</p>
+            <div className={`w-24 h-24 rounded-lg overflow-hidden border shadow-sm ${isDark ? 'border-navy-700' : 'border-slate-200'}`}>
               <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
             </div>
           </div>

@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ============================================================
    DESIGN TOKENS — CivicConnect
-   Primary: #1E5AA8 (trustworthy blue)
+   Primary: #1E5AA8 (trustworthy government blue)
    Success: #16A34A (resolved — green)
    Warning: #D97706 (in-progress — amber)
    Danger : #DC2626 (open/urgent — red)
@@ -27,14 +27,23 @@
   --color-warning: #D97706;
   --color-danger:  #DC2626;
 
+  /* Dark palette */
+  --color-navy-950: #060E1E;
+  --color-navy-900: #0A1628;
+  --color-navy-800: #0F2040;
+  --color-navy-700: #162B57;
+  --color-navy-600: #1E3A6E;
+
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Manrope', 'Inter', system-ui, sans-serif;
 
   /* Shadows */
   --shadow-nav:        0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
   --shadow-card:       0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   --shadow-card-hover: 0 4px 16px -2px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.06);
   --shadow-tab-bar:    0 -1px 3px 0 rgb(0 0 0 / 0.06);
+  --shadow-glow:       0 0 40px -8px rgba(30, 90, 168, 0.4);
 }
 
 /* ============================================================
@@ -49,6 +58,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -56,26 +66,26 @@ body {
   background-color: #F8FAFC;
   color: #1E293B;
   margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Safe area for mobile bottom bar */
+/* ── Dark mode ── */
+html.dark body {
+  background-color: #060E1E;
+  color: #E2E8F0;
+}
+
+/* Safe area for mobile */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Focus ring consistency */
+/* Focus ring */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 6px;
 }
-
-/* Remove focus outline for mouse users */
 :focus:not(:focus-visible) {
   outline: none;
 }
@@ -84,22 +94,32 @@ html {
    CUSTOM SCROLLBAR
    ============================================================ */
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+html.dark ::-webkit-scrollbar-thumb { background: #1E3A6E; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #1E5AA8; }
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+
+.font-display {
+  font-family: var(--font-display);
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.gradient-text {
+  background: linear-gradient(135deg, #1E5AA8 0%, #4D8DCE 50%, #88B5E0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+html.dark .gradient-text {
+  background: linear-gradient(135deg, #88B5E0 0%, #4D8DCE 50%, #1E5AA8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 /* ============================================================
@@ -110,27 +130,102 @@ html {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-.animate-fade-in {
-  animation: fade-in 0.25s ease-out both;
-}
+.animate-fade-in { animation: fade-in 0.25s ease-out both; }
 
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.animate-slide-up { animation: slide-up 0.3s ease-out both; }
 
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out both;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-8px) rotate(2deg); }
+}
+.animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(30, 90, 168, 0); }
+  50%       { box-shadow: 0 0 24px 4px rgba(30, 90, 168, 0.3); }
+}
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+  animation: shimmer 2.5s infinite;
 }
 
 /* Staggered children */
-.stagger-children > * {
-  animation: fade-in 0.25s ease-out both;
+.stagger-children > * { animation: fade-in 0.3s ease-out both; }
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
+
+/* ============================================================
+   LANDING PAGE SPECIFIC
+   ============================================================ */
+
+/* Subtle grid pattern for hero background */
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(30, 90, 168, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 90, 168, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+html.dark .bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(30, 90, 168, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 90, 168, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Glow accent blob */
+.bg-glow-blue {
+  background: radial-gradient(ellipse at center, rgba(30, 90, 168, 0.15) 0%, transparent 70%);
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+html.dark .glass-card {
+  background: rgba(10, 22, 40, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 90, 168, 0.2);
+}
+
+/* Section separator */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(30, 90, 168, 0.15), transparent);
+}
+
+html.dark .section-divider {
+  background: linear-gradient(90deg, transparent, rgba(30, 90, 168, 0.3), transparent);
+}

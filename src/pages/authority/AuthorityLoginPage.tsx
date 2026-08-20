@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui'
+import { useTheme } from '../../context/ThemeContext'
 import toast from 'react-hot-toast'
 
 export function AuthorityLoginPage() {
   const navigate = useNavigate()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,7 +35,11 @@ export function AuthorityLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 py-12">
+    <div className={`min-h-screen flex items-center justify-center px-4 py-12 ${
+      isDark
+        ? 'bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950'
+        : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
+    }`}>
       <div className="w-full max-w-md animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
@@ -42,7 +49,7 @@ export function AuthorityLoginPage() {
               <path fillRule="evenodd" d="M3 18.4v-.24c0-1.32 1.06-2.4 2.38-2.4h13.24C19.94 15.76 21 16.84 21 18.16v.24c0 1.32-1.06 2.4-2.38 2.4H5.38C4.06 20.8 3 19.72 3 18.4z" clipRule="evenodd" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Authority Portal</h1>
+          <h1 className="text-2xl font-bold font-display text-white">Authority Portal</h1>
           <p className="text-slate-400 text-sm mt-1">Municipal Corporation — Secure Access</p>
         </div>
 
@@ -102,3 +109,4 @@ export function AuthorityLoginPage() {
     </div>
   )
 }
+

@@ -3,6 +3,7 @@ import { Card, Button } from '../../../components/ui'
 import { supabase } from '../../../lib/supabaseClient'
 import type { ComplaintRow, ComplaintStatus } from '../../../types/complaint'
 import toast from 'react-hot-toast'
+import { useTheme } from '../../../context/ThemeContext'
 
 interface StatusUpdateControlProps {
   complaint: ComplaintRow
@@ -18,6 +19,8 @@ const AVAILABLE_STATUSES: { value: ComplaintStatus; label: string }[] = [
 ]
 
 export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdateControlProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [newStatus, setNewStatus] = useState<ComplaintStatus>(complaint.status)
   const [note, setNote] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -106,12 +109,12 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
   }
 
   return (
-    <Card className="bg-slate-50 border border-slate-200">
-      <h3 className="text-sm font-bold text-slate-800 mb-4">Update Status</h3>
+    <Card className={`${isDark ? 'bg-navy-950/50 border-navy-800' : 'bg-slate-50 border-slate-200'}`}>
+      <h3 className={`text-sm font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>Update Status</h3>
 
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-medium text-slate-700 mb-1.5 block">New Status</label>
+          <label className={`text-xs font-medium mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>New Status</label>
           <div className="flex flex-wrap gap-2">
             {AVAILABLE_STATUSES.map(s => {
               const isSelected = newStatus === s.value
@@ -123,7 +126,7 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
                     'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors border',
                     isSelected 
                       ? 'bg-primary text-white border-primary shadow-sm' 
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300 hover:text-primary'
+                      : (isDark ? 'bg-navy-900 text-slate-400 border-navy-700 hover:border-primary-400 hover:text-primary-400' : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300 hover:text-primary')
                   ].join(' ')}
                 >
                   {s.label}
@@ -135,7 +138,7 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
 
         {newStatus === 'resolved' && (
           <div className="animate-fade-in">
-            <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+            <label className={`text-xs font-medium mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
               Completion Proof Photo (Required for Resolution)
             </label>
             <div className="flex items-center gap-3">
@@ -148,28 +151,27 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
                   if (file) setPhotoFile(file)
                   else setPhotoFile(null)
                 }}
-                className="block w-full text-sm text-slate-500
+                className={`block w-full text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-full file:border-0
                   file:text-xs file:font-semibold
-                  file:bg-primary-50 file:text-primary
-                  hover:file:bg-primary-100 cursor-pointer"
+                  ${isDark ? 'file:bg-primary-900/30 file:text-primary-300 hover:file:bg-primary-900/50' : 'file:bg-primary-50 file:text-primary hover:file:bg-primary-100'} cursor-pointer`}
               />
             </div>
             {complaint.resolution_photo_url && !photoFile && (
-              <p className="text-[10px] text-slate-500 mt-1">A photo has already been uploaded for this resolution.</p>
+              <p className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>A photo has already been uploaded for this resolution.</p>
             )}
           </div>
         )}
 
         <div>
-          <label htmlFor="note" className="text-xs font-medium text-slate-700 mb-1.5 block">
+          <label htmlFor="note" className={`text-xs font-medium mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
             Add a Note (Optional)
           </label>
           <textarea
             id="note"
             rows={2}
-            className="w-full rounded-lg border border-slate-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-slate-400 bg-white"
+            className={`w-full rounded-lg border p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-900 border-navy-700 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400'}`}
             placeholder="e.g., Assigned to maintenance crew..."
             value={note}
             onChange={(e) => setNote(e.target.value)}

@@ -1,3 +1,5 @@
+import { useTheme } from '../../../context/ThemeContext'
+
 export interface Step {
   id: number
   label: string
@@ -9,11 +11,14 @@ interface StepIndicatorProps {
 }
 
 export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <div className="w-full">
       <div className="flex items-center justify-between relative">
         {/* Background line */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 rounded-full" />
+        <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 rounded-full ${isDark ? 'bg-navy-800' : 'bg-slate-200'}`} />
         
         {/* Active progress line */}
         <div 
@@ -32,7 +37,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
                   'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors duration-300',
                   isActive ? 'border-primary bg-primary text-white shadow-md' : '',
                   isCompleted ? 'border-primary bg-primary text-white' : '',
-                  !isActive && !isCompleted ? 'border-slate-300 bg-white text-slate-400' : ''
+                  !isActive && !isCompleted ? (isDark ? 'border-navy-700 bg-navy-900 text-slate-500' : 'border-slate-300 bg-white text-slate-400') : ''
                 ].join(' ')}
               >
                 {isCompleted ? (
@@ -45,7 +50,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
               </div>
               <span className={[
                 'absolute top-10 text-[10px] font-medium whitespace-nowrap hidden sm:block',
-                isActive ? 'text-primary' : 'text-slate-500'
+                isActive ? (isDark ? 'text-primary-400' : 'text-primary') : (isDark ? 'text-slate-500' : 'text-slate-500')
               ].join(' ')}>
                 {step.label}
               </span>

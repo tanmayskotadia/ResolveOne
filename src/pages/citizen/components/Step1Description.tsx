@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Card, Button } from '../../../components/ui'
 import { Spinner } from '../../../components/ui/Spinner'
 import type { ComplaintData } from '../../../types/complaint'
+import { useTheme } from '../../../context/ThemeContext'
 
 interface Step1Props {
   data: ComplaintData
@@ -30,6 +31,8 @@ const LANGUAGES = [
 ]
 
 export function Step1Description({ data, onChange, onNext }: Step1Props) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [activeTab, setActiveTab] = useState<'type' | 'speak'>(data.source === 'voice' ? 'speak' : 'type')
   const [isRecording, setIsRecording] = useState(false)
   const [isTranscribing, setIsTranscribing] = useState(false)
@@ -130,15 +133,15 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card>
+      <Card className={isDark ? '!bg-navy-900 !border-navy-800' : ''}>
         <div className="space-y-2">
-          <label htmlFor="language" className="text-sm font-medium text-slate-700">
+          <label htmlFor="language" className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
             Preferred Language <span className="text-danger">*</span>
           </label>
           <div className="relative">
             <select
               id="language"
-              className="w-full rounded-lg border border-slate-200 p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+              className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none ${isDark ? 'bg-navy-950 border-navy-800 text-white' : 'bg-white border-slate-200'}`}
               value={data.language}
               onChange={(e) => onChange({ language: e.target.value })}
             >
@@ -155,14 +158,14 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
         </div>
       </Card>
 
-      <Card noPadding>
+      <Card noPadding className={isDark ? '!bg-navy-900 !border-navy-800' : ''}>
         {/* Tabs Header */}
-        <div className="flex border-b border-slate-100">
+        <div className={`flex border-b ${isDark ? 'border-navy-800' : 'border-slate-100'}`}>
           <button
             onClick={() => handleTabChange('type')}
             className={[
               'flex-1 py-3 text-sm font-medium transition-colors',
-              activeTab === 'type' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-700'
+              activeTab === 'type' ? (isDark ? 'text-primary-400 border-b-2 border-primary-400' : 'text-primary border-b-2 border-primary') : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
             ].join(' ')}
           >
             Type
@@ -171,7 +174,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
             onClick={() => handleTabChange('speak')}
             className={[
               'flex-1 py-3 text-sm font-medium transition-colors',
-              activeTab === 'speak' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-700'
+              activeTab === 'speak' ? (isDark ? 'text-primary-400 border-b-2 border-primary-400' : 'text-primary border-b-2 border-primary') : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
             ].join(' ')}
           >
             Speak
@@ -180,17 +183,17 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
 
         <div className="p-5 space-y-5">
           {sttError && (
-            <div className="p-3 bg-red-50 text-danger text-sm rounded-lg border border-red-200">
+            <div className={`p-3 text-sm rounded-lg border ${isDark ? 'bg-red-950/30 text-red-400 border-red-900/50' : 'bg-red-50 text-danger border-red-200'}`}>
               {sttError}
             </div>
           )}
 
           {activeTab === 'speak' && (
-            <div className="flex flex-col items-center justify-center py-6 bg-slate-50 rounded-xl border border-slate-100">
+            <div className={`flex flex-col items-center justify-center py-6 rounded-xl border ${isDark ? 'bg-navy-950 border-navy-800' : 'bg-slate-50 border-slate-100'}`}>
               {isTranscribing ? (
                 <div className="flex flex-col items-center gap-3">
                   <Spinner size="lg" />
-                  <p className="text-sm text-slate-500 font-medium">Transcribing audio...</p>
+                  <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Transcribing audio...</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-4">
@@ -211,7 +214,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
                       </svg>
                     )}
                   </button>
-                  <p className="text-sm font-medium text-slate-600">
+                  <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                     {isRecording ? 'Listening... Tap to stop' : 'Tap to speak your complaint'}
                   </p>
                 </div>
@@ -220,33 +223,33 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
           )}
 
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium text-slate-700">
+            <label htmlFor="description" className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
               Description <span className="text-danger">*</span>
             </label>
             <textarea
               id="description"
               rows={4}
-              className="w-full rounded-lg border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-slate-400"
+              className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-950 border-navy-800 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
               placeholder="Describe the issue in detail..."
               value={data.description}
               onChange={(e) => onChange({ description: e.target.value })}
             />
             {activeTab === 'speak' && data.description && !isTranscribing && (
-              <p className="text-xs text-slate-500">You can edit the transcribed text if needed.</p>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>You can edit the transcribed text if needed.</p>
             )}
           </div>
         </div>
       </Card>
 
-      <Card>
+      <Card className={isDark ? '!bg-navy-900 !border-navy-800' : ''}>
         <div className="space-y-2">
-          <label htmlFor="category" className="text-sm font-medium text-slate-700">
+          <label htmlFor="category" className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
             Category <span className="text-danger">*</span>
           </label>
           <div className="relative">
             <select
               id="category"
-              className="w-full rounded-lg border border-slate-200 p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+              className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none ${isDark ? 'bg-navy-950 border-navy-800 text-white' : 'bg-white border-slate-200'}`}
               value={data.category}
               onChange={(e) => onChange({ category: e.target.value })}
             >
