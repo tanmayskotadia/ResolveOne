@@ -21,7 +21,6 @@ export function Step4Review({ data, onBack }: Step4Props) {
   const [successId, setSuccessId] = useState<string | null>(null)
 
   const previewUrl = data.photoFile ? URL.createObjectURL(data.photoFile) : null
-  const shortCode = (id: string) => 'CC-' + id.slice(-8).toUpperCase()
 
   const handleSubmit = async () => {
     if (!citizenHash) {

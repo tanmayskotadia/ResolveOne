@@ -1,5 +1,6 @@
 import { Badge } from '../../../components/ui'
 import type { ComplaintRow } from '../../../types/complaint'
+import { useTheme } from '../../../context/ThemeContext'
 
 interface ComplaintCardProps {
   complaint: ComplaintRow
@@ -40,18 +41,20 @@ const categoryIcons: Record<string, string> = {
 }
 
 export function ComplaintCard({ complaint, onClick }: ComplaintCardProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const statusVariant = statusBadgeMap[complaint.status] ?? 'default'
   const icon = categoryIcons[complaint.category] ?? '📋'
 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-slate-100 shadow-card hover:shadow-card-hover hover:border-primary-200 hover:-translate-y-0.5 transition-all duration-200 group"
+      className={`w-full text-left rounded-xl border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 group ${isDark ? 'bg-navy-900 border-navy-800 hover:border-primary-400' : 'bg-white border-slate-100 hover:border-primary-200'}`}
       aria-label={`View complaint ${shortCode(complaint.id)}`}
     >
       <div className="p-4 flex items-start gap-3">
         {/* Category icon bubble */}
-        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 text-xl group-hover:bg-primary-50 transition-colors">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-xl transition-colors ${isDark ? 'bg-navy-950 group-hover:bg-navy-800' : 'bg-slate-50 group-hover:bg-primary-50'}`}>
           {icon}
         </div>
 
@@ -63,21 +66,21 @@ export function ComplaintCard({ complaint, onClick }: ComplaintCardProps) {
             <Badge variant={statusVariant} size="sm" />
           </div>
 
-          <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-primary transition-colors">
+          <p className={`text-sm font-semibold truncate transition-colors ${isDark ? 'text-slate-200 group-hover:text-primary-400' : 'text-slate-800 group-hover:text-primary'}`}>
             {complaint.category}
           </p>
 
-          <p className="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+          <p className={`text-xs mt-0.5 line-clamp-2 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {complaint.description}
           </p>
 
           <div className="flex items-center gap-2 mt-2">
             {complaint.source === 'voice' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full border border-slate-100">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${isDark ? 'text-slate-400 bg-navy-950 border-navy-800' : 'text-slate-400 bg-slate-50 border-slate-100'}`}>
                 🎙️ Voice
               </span>
             )}
-            <span className="text-[11px] text-slate-400">
+            <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
               {formatDate(complaint.created_at)}
             </span>
           </div>

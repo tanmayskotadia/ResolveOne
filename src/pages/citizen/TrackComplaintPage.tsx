@@ -7,13 +7,36 @@ import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import { supabase } from '../../lib/supabaseClient'
 import { Button } from '../../components/ui'
-import { hashAadhaar, validateAadhaar, DEMO_AADHAAR_NUMBERS } from '../../lib/aadhaarHash'
+import { hashAadhaar, validateAadhaar } from '../../lib/aadhaarHash'
 import type { ComplaintRow, StatusHistoryRow, ComplaintStatus } from '../../types/complaint'
 import { useTheme } from '../../context/ThemeContext'
 
 // Fix default Leaflet icon (required when bundling with Vite)
 const DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow, iconSize: [25, 41], iconAnchor: [12, 41] })
 L.Marker.prototype.options.icon = DefaultIcon
+
+/**
+ * Safely resolves a resolution_photo_url to a usable full URL.
+ *
+ * The authority upload may store either:
+ *   (a) A full https:// public URL from supabase.storage.getPublicUrl()
+ *   (b) A bare storage object path like "resolution_abc_123.jpg"
+ *
+ * In case (b) we construct the correct public URL ourselves using the
+ * Supabase project URL and the complaint-resolution-photos bucket.
+ */
+function resolveResolutionPhotoUrl(rawUrl: string | null | undefined): string | null {
+  if (!rawUrl) return null
+  // Already a full URL — use as-is
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+    return rawUrl
+  }
+  // Bare storage path — construct the Supabase Storage public URL
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+  const bucket = 'complaint-resolution-photos'
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${rawUrl}`
+}
+
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -69,29 +92,7 @@ function formatDateTime(dateStr: string) {
   return new Date(dateStr).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-// ─── Demo offline fallback ────────────────────────────────────────────────────
 
-const DEMO_COMPLAINT: ComplaintRow = {
-  id: 'demo-0000-0000-00000000',
-  citizen_id: null,
-  citizen_identifier_hash: null,
-  description: 'Large pothole near the main road junction causing vehicle damage and traffic hazard.',
-  category: 'Road & Infrastructure',
-  source: 'text',
-  lat: 23.0225,
-  lng: 72.5714,
-  address: 'Main Road Junction, Ward 12, Ahmedabad',
-  photo_url: null,
-  status: 'in_progress',
-  created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-}
-
-const DEMO_HISTORY: StatusHistoryRow[] = [
-  { id: 'h1', complaint_id: 'demo-0000-0000-00000000', status: 'submitted',   note: null,                             changed_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), changed_by: null },
-  { id: 'h2', complaint_id: 'demo-0000-0000-00000000', status: 'open',        note: 'Complaint logged and assigned.', changed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), changed_by: null },
-  { id: 'h3', complaint_id: 'demo-0000-0000-00000000', status: 'in_progress', note: 'Road repair crew dispatched.',   changed_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), changed_by: null },
-]
 
 function displayCode(complaint: ComplaintRow): string {
   if ((complaint as any).complaint_code) return (complaint as any).complaint_code
@@ -165,15 +166,6 @@ export function TrackComplaintPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  // ── Demo mode ───────────────────────────────────────────────────────────────
-
-  const handleDemoLoad = () => {
-    setError(null)
-    setComplaintCode('CC-DEMO1024')
-    setAadhaar('')
-    setResult({ complaint: DEMO_COMPLAINT, history: DEMO_HISTORY, isDemo: true })
   }
 
   // ── Timeline items ──────────────────────────────────────────────────────────
@@ -331,45 +323,64 @@ export function TrackComplaintPage() {
                 )}
               </div>
 
-              {/* RESOLUTION DETAILS (if any) */}
-              {(() => {
-                if (result.complaint.status !== 'resolved' || !result.complaint.resolution_photo_url) return null;
+              {/* RESOLUTION DETAILS — only shown when status is explicitly 'resolved' */}
+              {result.complaint.status === 'resolved' && (() => {
                 const resolvedHistory = result.history.find(h => h.status === 'resolved');
+                // Resolve URL — handles both full URLs and bare storage paths
+                const resolvedPhotoUrl = resolveResolutionPhotoUrl(result.complaint.resolution_photo_url)
+                const hasPhoto = Boolean(resolvedPhotoUrl);
                 return (
-                  <div className={`rounded-2xl border shadow-sm overflow-hidden flex flex-col md:flex-row ${isDark ? 'bg-emerald-900/20 border-emerald-900/50' : 'bg-white border-success-200'}`}>
-                    <div className={`p-6 md:p-8 flex-1 ${isDark ? 'bg-emerald-900/10' : 'bg-success-50/50'}`}>
+                  <div className={`rounded-2xl border shadow-sm overflow-hidden flex flex-col md:flex-row ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-success-200'}`}>
+                    <div className={`p-6 md:p-8 flex-1 ${isDark ? 'bg-navy-900/50' : 'bg-success-50/50'}`}>
                       <div className="flex items-center gap-2 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-6 h-6 ${isDark ? 'text-emerald-400' : 'text-success-600'}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-6 h-6 ${isDark ? 'text-primary-400' : 'text-success-600'}`}>
                           <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
                         </svg>
-                        <h2 className={`text-lg font-bold ${isDark ? 'text-emerald-400' : 'text-success-800'}`}>Resolution Details</h2>
+                        <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-success-800'}`}>Resolution Details</h2>
                       </div>
-                      <p className={`text-sm leading-relaxed font-medium mb-4 ${isDark ? 'text-emerald-200' : 'text-success-700'}`}>
-                        Your complaint has been successfully resolved by the municipal authority. 
-                        Please see the attached completion proof photo.
+                      <p className={`text-sm leading-relaxed font-medium mb-4 ${isDark ? 'text-slate-300' : 'text-success-700'}`}>
+                        Your complaint has been successfully resolved by the municipal authority.
+                        {hasPhoto ? ' Please see the attached completion proof photo.' : ''}
                       </p>
                       {resolvedHistory && (
-                        <div className={`border rounded-xl p-4 mt-4 ${isDark ? 'bg-navy-900/60 border-emerald-800/60' : 'bg-white/60 border-success-200/60'}`}>
+                        <div className={`border rounded-xl p-4 mt-4 ${isDark ? 'bg-navy-950/50 border-navy-800' : 'bg-white/60 border-success-200/60'}`}>
                           <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
                             <div>
-                              <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-emerald-500' : 'text-success-600/70'}`}>Resolved On</p>
-                              <p className={`text-sm font-semibold ${isDark ? 'text-emerald-300' : 'text-success-800'}`}>{formatDate(resolvedHistory.changed_at)}</p>
+                              <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-success-600/70'}`}>Resolved On</p>
+                              <p className={`text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-success-800'}`}>{formatDate(resolvedHistory.changed_at)}</p>
                             </div>
                             {resolvedHistory.note && (
                               <div className="flex-1">
-                                <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-emerald-500' : 'text-success-600/70'}`}>Authority Note</p>
-                                <p className={`text-sm font-medium ${isDark ? 'text-emerald-300' : 'text-success-800'}`}>{resolvedHistory.note}</p>
+                                <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-success-600/70'}`}>Authority Note</p>
+                                <p className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-success-800'}`}>{resolvedHistory.note}</p>
                               </div>
                             )}
                           </div>
                         </div>
                       )}
                     </div>
-                    <div className={`md:w-64 border-t md:border-t-0 md:border-l p-4 flex flex-col items-center justify-center shrink-0 ${isDark ? 'border-emerald-900/50 bg-navy-900' : 'border-success-100 bg-white'}`}>
-                      <p className={`text-[11px] font-bold uppercase tracking-wider mb-3 w-full text-left ${isDark ? 'text-emerald-500' : 'text-success-600'}`}>Completion Proof</p>
-                      <div className={`rounded-xl overflow-hidden shadow-sm border w-full h-40 relative ${isDark ? 'border-emerald-800/50' : 'border-success-200'}`}>
-                        <img src={result.complaint.resolution_photo_url} alt="Resolution Attachment" className="absolute inset-0 w-full h-full object-cover" />
-                      </div>
+
+                    {/* Right panel: photo or no-photo notice */}
+                    <div className={`md:w-64 border-t md:border-t-0 md:border-l p-4 flex flex-col items-center justify-center shrink-0 ${isDark ? 'border-navy-800 bg-navy-950/50' : 'border-success-100 bg-white'}`}>
+                      <p className={`text-[11px] font-bold uppercase tracking-wider mb-3 w-full text-left ${isDark ? 'text-slate-500' : 'text-success-600'}`}>Completion Proof</p>
+                      {hasPhoto ? (
+                        <div className={`rounded-xl overflow-hidden shadow-sm border w-full h-40 relative ${isDark ? 'border-navy-700' : 'border-success-200'}`}>
+                          <img
+                            src={resolvedPhotoUrl!}
+                            alt="Resolution completion proof uploaded by authority"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`w-full h-40 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 ${isDark ? 'border-navy-700 bg-navy-900/30' : 'border-success-200 bg-success-50/30'}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-8 h-8 ${isDark ? 'text-slate-600' : 'text-success-300'}`}>
+                            <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clipRule="evenodd" />
+                          </svg>
+                          <p className={`text-xs text-center leading-relaxed px-3 ${isDark ? 'text-slate-500' : 'text-success-500'}`}>
+                            Resolution proof has not been uploaded yet.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
@@ -461,21 +472,6 @@ export function TrackComplaintPage() {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
-function Row({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-      {icon ? (
-        <div className="flex items-start gap-1.5">
-          {icon}
-          <p className="text-sm text-slate-700">{value}</p>
-        </div>
-      ) : (
-        <p className="text-sm text-slate-700">{value}</p>
-      )}
-    </div>
-  )
-}
 
 function PipelineTimeline({ currentStatus, history, createdAt, isDark }: { currentStatus: ComplaintStatus; history: StatusHistoryRow[]; createdAt: string; isDark?: boolean }) {
   // Build a timestamp map from real history

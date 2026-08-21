@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button, Card } from '../../components/ui'
-import { hashAadhaar, validateAadhaar, DEMO_AADHAAR_NUMBERS } from '../../lib/aadhaarHash'
+import { hashAadhaar, validateAadhaar } from '../../lib/aadhaarHash'
 import { useCitizen } from '../../context/CitizenContext'
 import { useTheme } from '../../context/ThemeContext'
 
@@ -51,20 +51,6 @@ export function AadhaarVerifyPage() {
       setLoading(false)
     }
   }
-
-  const handleDemo = async (demoNumber: string) => {
-    setLoading(true)
-    try {
-      const hash = await hashAadhaar(demoNumber)
-      setCitizenHash(hash)
-      navigate('/citizen/report')
-    } catch {
-      setError('Demo verification failed.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <div className={`min-h-screen flex items-center justify-center px-4 py-12 ${isDark ? 'bg-navy-950' : 'bg-gradient-to-br from-primary-50 via-white to-slate-50'
       }`}>

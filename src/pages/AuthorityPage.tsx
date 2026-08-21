@@ -106,7 +106,7 @@ export function AuthorityPage() {
             <Skeleton className="h-[72px] w-full max-w-[280px]" />
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="bg-white rounded-xl p-4 border border-slate-100 flex items-start gap-4 shadow-sm">
+                <div key={i} className={`rounded-xl p-4 border flex items-start gap-4 shadow-sm ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-100'}`}>
                   <div className="flex-1 space-y-2.5">
                     <div className="flex items-center gap-2">
                       <Skeleton className="w-16 h-5 rounded" />

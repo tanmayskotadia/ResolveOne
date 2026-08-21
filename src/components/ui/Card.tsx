@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react'
+import { useTheme } from '../../context/ThemeContext'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
@@ -29,10 +30,13 @@ export function Card({
   className = '',
   ...props
 }: CardProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <div
       className={[
-        'bg-white rounded-xl shadow-card border border-slate-100',
+        isDark ? 'bg-navy-900 rounded-xl shadow-card border border-navy-800' : 'bg-white rounded-xl shadow-card border border-slate-100',
         'transition-all duration-200',
         hoverable ? 'hover:-translate-y-0.5 hover:shadow-card-hover cursor-pointer' : '',
         noPadding ? '' : 'p-5',
@@ -55,12 +59,15 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ title, subtitle, action }: CardHeaderProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  
   return (
     <div className="flex items-start justify-between mb-4">
       <div>
-        <h3 className="text-base font-semibold text-slate-800">{title}</h3>
+        <h3 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{title}</h3>
         {subtitle && (
-          <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>
+          <p className={`text-sm mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{subtitle}</p>
         )}
       </div>
       {action && <div className="ml-4 shrink-0">{action}</div>}

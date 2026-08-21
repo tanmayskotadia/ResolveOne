@@ -1,17 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 
-// ── Icon helpers ──────────────────────────────────────────────────────────────
-
-function Icon({ d, className = 'w-6 h-6' }: { d: string | string[]; className?: string }) {
-  const paths = Array.isArray(d) ? d : [d]
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-      {paths.map((p, i) => <path key={i} d={p} fillRule="evenodd" clipRule="evenodd" />)}
-    </svg>
-  )
-}
-
 // ── Smart City SVG Illustration ───────────────────────────────────────────────
 
 function CityIllustration({ isDark }: { isDark: boolean }) {

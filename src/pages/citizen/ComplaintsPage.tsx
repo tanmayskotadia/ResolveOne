@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import { Button, Skeleton } from '../../components/ui'
 import { ComplaintCard } from './components/ComplaintCard'
 import { ComplaintDetail } from './components/ComplaintDetail'
@@ -10,6 +11,9 @@ import type { ComplaintRow } from '../../types/complaint'
 // ── Empty State ────────────────────────────────────────────────────────────────
 
 function EmptyState() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4 animate-fade-in">
       {/* Illustration */}
@@ -17,7 +21,7 @@ function EmptyState() {
         {/* Outer ring */}
         <div className="absolute inset-0 rounded-full bg-primary-50 border-2 border-dashed border-primary-200 animate-pulse" />
         {/* Inner icon */}
-        <div className="absolute inset-4 rounded-full bg-white shadow-card flex items-center justify-center">
+        <div className={`absolute inset-4 rounded-full shadow-card flex items-center justify-center ${isDark ? 'bg-navy-900 border border-navy-800' : 'bg-white'}`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -42,8 +46,8 @@ function EmptyState() {
         <div className="absolute -bottom-1 -left-2 w-3 h-3 bg-success rounded-full opacity-60" />
       </div>
 
-      <h2 className="text-xl font-bold text-slate-800 mb-2">No complaints yet</h2>
-      <p className="text-sm text-slate-500 max-w-xs leading-relaxed mb-6">
+      <h2 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>No complaints yet</h2>
+      <p className={`text-sm max-w-xs leading-relaxed mb-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
         You haven't reported any issues yet. Spotted something that needs fixing in your city?
       </p>
 
@@ -67,15 +71,18 @@ function EmptyState() {
 // ── Error State ────────────────────────────────────────────────────────────────
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4">
-      <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-4">
+      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${isDark ? 'bg-red-900/30' : 'bg-red-50'}`}>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-danger" aria-hidden="true">
           <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
         </svg>
       </div>
-      <h2 className="text-lg font-bold text-slate-800 mb-1">Failed to load</h2>
-      <p className="text-sm text-slate-500 mb-4">Could not fetch your complaints. Check your connection and try again.</p>
+      <h2 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>Failed to load</h2>
+      <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Could not fetch your complaints. Check your connection and try again.</p>
       <Button variant="secondary" onClick={onRetry}>Try Again</Button>
     </div>
   )
@@ -98,6 +105,8 @@ const filterToStatus: Record<Filter, string | null> = {
 
 export function ComplaintsPage() {
   const { user } = useAuth()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [complaints, setComplaints] = useState<ComplaintRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -152,8 +161,8 @@ export function ComplaintsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">My Complaints</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Complaints</h1>
+          <p className={`text-sm mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {loading ? 'Loading…' : `${complaints.length} complaint${complaints.length !== 1 ? 's' : ''} submitted`}
           </p>
         </div>
@@ -179,7 +188,7 @@ export function ComplaintsPage() {
                 'px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200',
                 activeFilter === f
                   ? 'bg-primary text-white shadow-sm'
-                  : 'bg-white text-slate-500 border border-slate-200 hover:border-primary-300 hover:text-primary',
+                  : (isDark ? 'bg-navy-900 text-slate-400 border border-navy-800 hover:border-primary-400 hover:text-primary-400' : 'bg-white text-slate-500 border border-slate-200 hover:border-primary-300 hover:text-primary'),
               ].join(' ')}
             >
               {f}
@@ -192,7 +201,7 @@ export function ComplaintsPage() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-start gap-4">
+            <div key={i} className={`rounded-2xl p-4 border shadow-sm flex items-start gap-4 ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-100'}`}>
               <Skeleton className="w-12 h-12 rounded-full shrink-0" />
               <div className="flex-1 space-y-2 py-1">
                 <div className="flex items-center gap-2">

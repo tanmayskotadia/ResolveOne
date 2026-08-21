@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTheme } from '../context/ThemeContext'
 
 interface TabItem {
   to: string
@@ -69,9 +70,12 @@ const tabs: TabItem[] = [
 ]
 
 export function BottomTabBar() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-slate-100 shadow-tab-bar pb-safe"
+      className={`fixed bottom-0 left-0 right-0 z-50 md:hidden shadow-tab-bar pb-safe border-t ${isDark ? 'bg-navy-950 border-navy-800' : 'bg-white border-slate-100'}`}
       aria-label="Mobile navigation"
     >
       <div className="flex items-stretch h-16">
@@ -83,7 +87,9 @@ export function BottomTabBar() {
             className={({ isActive }) =>
               [
                 'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors duration-200',
-                isActive ? 'text-primary' : 'text-slate-400 hover:text-slate-600',
+                isActive 
+                    ? (isDark ? 'text-primary-400' : 'text-primary') 
+                    : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'),
               ].join(' ')
             }
             aria-label={tab.label}
