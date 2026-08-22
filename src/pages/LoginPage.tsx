@@ -82,7 +82,7 @@ export function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-slate-800">Welcome back</h1>
           <p className="text-slate-500 mt-1.5 text-sm">
-            Sign in to your CivicConnect account
+            Sign in to your ResolveOne account
           </p>
         </div>
 
@@ -173,7 +173,7 @@ export function LoginPage() {
                 <div className="w-full border-t border-slate-100" />
               </div>
               <div className="relative flex justify-center">
-                <span className="px-2 bg-white text-xs text-slate-400">New to CivicConnect?</span>
+                <span className="px-2 bg-white text-xs text-slate-400">New to ResolveOne?</span>
               </div>
             </div>
 

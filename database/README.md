@@ -1,4 +1,4 @@
-# CivicConnect — Database Setup Guide
+# ResolveOne — Database Setup Guide
 
 ## Which file to run
 

@@ -46,7 +46,7 @@ export function Navbar() {
               <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-sm">
                 <CivicIcon className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm font-bold text-white">CivicConnect</span>
+              <span className="text-sm font-bold text-white">ResolveOne</span>
               <span className="hidden sm:inline text-xs text-slate-500 font-medium border border-slate-700 rounded px-1.5 py-0.5 ml-1">Authority</span>
             </Link>
 
@@ -110,7 +110,7 @@ export function Navbar() {
               <CivicIcon className="w-5 h-5 text-white" />
             </div>
             <span className={`text-base font-bold font-display tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              CivicConnect
+              ResolveOne
             </span>
           </Link>
 

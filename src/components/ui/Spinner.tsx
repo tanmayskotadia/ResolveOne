@@ -42,7 +42,7 @@ export function PageLoader() {
       </div>
       <div className="flex flex-col items-center gap-1">
         <Spinner size="md" />
-        <p className="text-sm text-slate-400 font-medium mt-2">Loading CivicConnect…</p>
+        <p className="text-sm text-slate-400 font-medium mt-2">Loading ResolveOne…</p>
       </div>
     </div>
   )

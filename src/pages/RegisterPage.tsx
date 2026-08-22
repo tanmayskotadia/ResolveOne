@@ -140,7 +140,7 @@ export function RegisterPage() {
           </div>
           <h1 className="text-2xl font-bold text-slate-800">Create your account</h1>
           <p className="text-slate-500 mt-1.5 text-sm">
-            Join CivicConnect and make your city better
+            Join ResolveOne and make your city better
           </p>
         </div>
 

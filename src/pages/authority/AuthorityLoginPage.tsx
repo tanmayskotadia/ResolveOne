@@ -100,7 +100,7 @@ export function AuthorityLoginPage() {
 
           <div className="mt-4 pt-4 border-t border-white/10 text-center">
             <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">
-              ← Back to CivicConnect Home
+              ← Back to ResolveOne Home
             </Link>
           </div>
         </div>

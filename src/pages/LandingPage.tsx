@@ -237,7 +237,7 @@ export function LandingPage() {
               </h1>
 
               <p className={`text-lg leading-relaxed mb-8 max-w-xl ${subClass}`}>
-                CivicConnect bridges the gap between citizens and municipal authorities. Submit complaints, monitor resolution progress, and hold authorities accountable — all in one platform.
+                ResolveOne bridges the gap between citizens and municipal authorities. Submit complaints, monitor resolution progress, and hold authorities accountable — all in one platform.
               </p>
 
               {/* CTAs */}
@@ -381,7 +381,7 @@ export function LandingPage() {
 
             {/* Right: Solution */}
             <div>
-              <p className={`text-xs font-bold uppercase tracking-widest mb-4 text-emerald-500`}>The CivicConnect Solution</p>
+              <p className={`text-xs font-bold uppercase tracking-widest mb-4 text-emerald-500`}>The ResolveOne Solution</p>
               <h2 className={`text-3xl font-extrabold font-display mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 One platform. Full transparency. Real results.
               </h2>
@@ -464,12 +464,12 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <p className={`text-xs font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-primary-400' : 'text-primary'}`}>Why Citizens Trust CivicConnect</p>
+              <p className={`text-xs font-bold uppercase tracking-widest mb-4 ${isDark ? 'text-primary-400' : 'text-primary'}`}>Why Citizens Trust ResolveOne</p>
               <h2 className={`text-3xl sm:text-4xl font-extrabold font-display mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 Designed around transparency and accountability
               </h2>
               <p className={`text-base leading-relaxed mb-10 ${subClass}`}>
-                CivicConnect was built for the digital India initiative — bringing government services online with citizen-first design, data privacy, and zero tolerance for unresolved complaints.
+                ResolveOne was built for the digital India initiative — bringing government services online with citizen-first design, data privacy, and zero tolerance for unresolved complaints.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <TrustPillar
@@ -578,7 +578,7 @@ export function LandingPage() {
                     <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.432z" />
                   </svg>
                 </div>
-                <span className="text-base font-bold text-white font-display">CivicConnect</span>
+                <span className="text-base font-bold text-white font-display">ResolveOne</span>
               </div>
               <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
                 A digital civic engagement platform for smart cities. Connecting citizens with municipal authorities for faster, transparent complaint resolution.
@@ -593,7 +593,7 @@ export function LandingPage() {
                 {[
                   { label: 'Report Issue', to: '/citizen/verify' },
                   { label: 'Track Complaint', to: '/citizen/track' },
-                  { label: 'About CivicConnect', to: '#about' },
+                  { label: 'About ResolveOne', to: '#about' },
                 ].map(link => (
                   <li key={link.label}>
                     <Link to={link.to} className="text-sm text-slate-400 hover:text-white transition-colors">{link.label}</Link>
@@ -617,7 +617,7 @@ export function LandingPage() {
           </div>
 
           <div className={`border-t mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 ${isDark ? 'border-navy-800' : 'border-slate-800'}`}>
-            <p className="text-xs text-slate-500">© 2026 CivicConnect · Smart City Digital Platform</p>
+            <p className="text-xs text-slate-500">© 2026 ResolveOne · Smart City Digital Platform</p>
             <p className="text-xs text-slate-600">Built with transparency and accountability in mind.</p>
           </div>
         </div>
