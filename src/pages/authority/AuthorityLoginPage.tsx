@@ -38,31 +38,31 @@ export function AuthorityLoginPage() {
     <div className={`min-h-screen flex items-center justify-center px-4 py-12 ${
       isDark
         ? 'bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950'
-        : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
+        : 'bg-slate-50'
     }`}>
       <div className="w-full max-w-md animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/10 border border-white/20 rounded-2xl mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-7 h-7">
+          <div className={`inline-flex items-center justify-center w-14 h-14 border rounded-2xl mb-4 ${isDark ? 'bg-white/10 border-white/20' : 'bg-primary/10 border-primary/20'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-7 h-7 ${isDark ? 'text-white' : 'text-primary'}`}>
               <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 100 10.5 5.25 5.25 0 000-10.5zM9.75 6.75a2.25 2.25 0 114.5 0 2.25 2.25 0 01-4.5 0z" clipRule="evenodd" />
               <path fillRule="evenodd" d="M3 18.4v-.24c0-1.32 1.06-2.4 2.38-2.4h13.24C19.94 15.76 21 16.84 21 18.16v.24c0 1.32-1.06 2.4-2.38 2.4H5.38C4.06 20.8 3 19.72 3 18.4z" clipRule="evenodd" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold font-display text-white">Authority Portal</h1>
-          <p className="text-slate-400 text-sm mt-1">Municipal Corporation — Secure Access</p>
+          <h1 className={`text-2xl font-bold font-display ${isDark ? 'text-white' : 'text-slate-900'}`}>Authority Portal</h1>
+          <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Municipal Corporation — Secure Access</p>
         </div>
 
-        <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 shadow-xl">
+        <div className={`backdrop-blur rounded-2xl p-6 shadow-xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-3 bg-red-900/40 border border-red-500/40 text-red-300 text-sm rounded-lg">
+              <div className={`p-3 text-sm rounded-lg border ${isDark ? 'bg-red-900/40 border-red-500/40 text-red-300' : 'bg-red-50 border-red-200 text-red-600'}`}>
                 {error}
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label htmlFor="email" className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                 Official Email
               </label>
               <input
@@ -73,12 +73,12 @@ export function AuthorityLoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className={`w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'border-white/20 bg-white/10 text-white placeholder:text-slate-500' : 'border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400'}`}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label htmlFor="password" className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                 Password
               </label>
               <input
@@ -89,7 +89,7 @@ export function AuthorityLoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className={`w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'border-white/20 bg-white/10 text-white placeholder:text-slate-500' : 'border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400'}`}
               />
             </div>
 
@@ -98,8 +98,8 @@ export function AuthorityLoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 pt-4 border-t border-white/10 text-center">
-            <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">
+          <div className={`mt-4 pt-4 border-t text-center ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+            <Link to="/" className={`text-sm transition-colors ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'}`}>
               ← Back to ResolveOne Home
             </Link>
           </div>

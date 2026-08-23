@@ -43,7 +43,7 @@ export function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <Link to="/" className="flex items-center gap-2 group">
-              <span className="text-sm font-bold text-white">ResolveOne</span>
+              <span className="text-sm font-extrabold tracking-tight text-white font-display">Resolve<span className="text-primary-300">One</span></span>
               <span className="hidden sm:inline text-xs text-slate-500 font-medium border border-slate-700 rounded px-1.5 py-0.5 ml-1">Authority</span>
             </Link>
 
@@ -104,8 +104,8 @@ export function Navbar() {
           {/* Logo */}
           <div className="flex-1 flex justify-start">
             <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-              <span className={`text-base font-bold font-display tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                ResolveOne
+              <span className={`text-lg font-extrabold font-display tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                Resolve<span className={isDark ? 'text-primary-300' : 'text-primary'}>One</span>
               </span>
             </Link>
           </div>
@@ -213,14 +213,7 @@ export function Navbar() {
 
 // ── Sub-components ──────────────────────────────────────────
 
-function CivicIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
-      <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.432z" />
-    </svg>
-  )
-}
+
 
 function NavLink({ to, label, dark, exact, activePaths }: { to: string; label: string; dark: boolean; exact?: boolean; activePaths?: string[] }) {
   const location = useLocation()
