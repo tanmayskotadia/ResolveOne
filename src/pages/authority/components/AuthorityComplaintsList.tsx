@@ -14,8 +14,8 @@ const CATEGORY_FILTERS = ['All', 'Garbage/Waste', 'Road Damage/Potholes', 'Stree
 
 const statusBadgeMap: Record<string, any> = {
   submitted: 'pending',
-  open: 'open',
-  in_progress: 'in_progress',
+  'under-review': 'under-review',
+  'in-progress': 'in-progress',
   resolved: 'resolved',
   rejected: 'rejected',
 }
@@ -37,7 +37,7 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
       // Status Filter
       const statusMap: Record<string, string> = {
         'Submitted': 'submitted',
-        'In Progress': 'in_progress',
+        'In Progress': 'in-progress',
         'Resolved': 'resolved',
         'Rejected': 'rejected'
       }

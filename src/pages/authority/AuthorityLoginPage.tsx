@@ -21,7 +21,7 @@ export function AuthorityLoginPage() {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500))
 
-    if (email === 'officer@municipality.gov.in' && password === 'admin') {
+    if (email === 'officer@municipality.gov.in' && password === 'admin123') {
       localStorage.setItem('authority_logged_in', 'true')
       toast.success('Welcome, Officer!')
       navigate('/authority', { replace: true })

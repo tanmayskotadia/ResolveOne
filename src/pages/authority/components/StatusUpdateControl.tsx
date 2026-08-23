@@ -12,8 +12,8 @@ interface StatusUpdateControlProps {
 
 const AVAILABLE_STATUSES: { value: ComplaintStatus; label: string }[] = [
   { value: 'submitted',  label: 'Submitted'     },
-  { value: 'open',       label: 'Under Review'  },
-  { value: 'in_progress', label: 'In Progress'  },
+  { value: 'under-review',       label: 'Under Review'  },
+  { value: 'in-progress', label: 'In Progress'  },
   { value: 'resolved',   label: 'Resolved'      },
   { value: 'rejected',   label: 'Rejected'      },
 ]

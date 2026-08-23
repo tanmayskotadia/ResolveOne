@@ -96,7 +96,7 @@ type Filter = typeof FILTERS[number]
 const filterToStatus: Record<Filter, string | null> = {
   'All': null,
   'Submitted': 'submitted',
-  'In Progress': 'in_progress',
+  'In Progress': 'in-progress',
   'Resolved': 'resolved',
   'Rejected': 'rejected',
 }

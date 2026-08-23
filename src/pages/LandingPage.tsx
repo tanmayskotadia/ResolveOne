@@ -221,14 +221,6 @@ export function LandingPage() {
 
             {/* Left: Text */}
             <div className="stagger-children">
-              {/* Badge */}
-              <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-6 border ${
-                isDark ? 'bg-primary/15 text-primary-300 border-primary/30' : 'bg-primary-50 text-primary border-primary-100'
-              }`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
-                Smart Civic Platform
-              </div>
-
               {/* Headline */}
               <h1 className={`text-4xl sm:text-5xl lg:text-6xl leading-[1.1] mb-6 ${headingClass}`}>
                 Report Civic Issues.{' '}

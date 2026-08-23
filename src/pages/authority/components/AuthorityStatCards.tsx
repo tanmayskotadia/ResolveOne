@@ -10,7 +10,7 @@ export function AuthorityStatCards({ complaints }: AuthorityStatCardsProps) {
   const isDark = theme === 'dark'
   const total = complaints.length
   const submitted = complaints.filter(c => c.status === 'submitted').length
-  const inProgress = complaints.filter(c => c.status === 'in_progress').length
+  const inProgress = complaints.filter(c => c.status === 'in-progress').length
   const resolved = complaints.filter(c => c.status === 'resolved').length
 
   const stats = [

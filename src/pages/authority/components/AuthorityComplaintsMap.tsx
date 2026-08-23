@@ -22,9 +22,9 @@ const baseIcon = L.icon({
 // Define a style tag to apply filters to markers based on class names
 const markerStyles = `
   .marker-submitted { filter: hue-rotate(150deg); } /* Redish */
-  .marker-in_progress { filter: hue-rotate(190deg); } /* Orangeish */
+  .marker-in-progress { filter: hue-rotate(190deg); } /* Orangeish */
   .marker-resolved { filter: hue-rotate(270deg); } /* Greenish */
-  .marker-open { filter: hue-rotate(150deg); } 
+  .marker-under-review { filter: hue-rotate(150deg); } 
   .marker-rejected { filter: grayscale(100%); }
 `
 
@@ -35,8 +35,8 @@ interface AuthorityComplaintsMapProps {
 
 const statusBadgeMap: Record<string, any> = {
   submitted: 'pending',
-  open: 'open',
-  in_progress: 'in_progress',
+  'under-review': 'under-review',
+  'in-progress': 'in-progress',
   resolved: 'resolved',
   rejected: 'rejected',
 }

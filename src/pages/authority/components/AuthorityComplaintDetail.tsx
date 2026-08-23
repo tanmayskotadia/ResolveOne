@@ -18,11 +18,11 @@ const DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow, iconSize: [25
 L.Marker.prototype.options.icon = DefaultIcon
 
 const statusBadgeMap: Record<string, any> = {
-  submitted: 'pending', open: 'open', in_progress: 'in_progress', resolved: 'resolved', rejected: 'rejected',
+  submitted: 'pending', 'under-review': 'under-review', 'in-progress': 'in-progress', resolved: 'resolved', rejected: 'rejected',
 }
 
 const statusLabel: Record<string, string> = {
-  submitted: 'Submitted', open: 'Under Review', in_progress: 'In Progress', resolved: 'Resolved', rejected: 'Rejected',
+  submitted: 'Submitted', 'under-review': 'Under Review', 'in-progress': 'In Progress', resolved: 'Resolved', rejected: 'Rejected',
 }
 
 const statusIcon = (status: string, className = "w-4 h-4") => {
@@ -34,14 +34,14 @@ const statusIcon = (status: string, className = "w-4 h-4") => {
           <path d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
         </svg>
       )
-    case 'open':
+    case 'under-review':
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}>
           <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
           <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
         </svg>
       )
-    case 'in_progress':
+    case 'in-progress':
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}>
           <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
@@ -73,8 +73,8 @@ function formatDatetime(dateStr: string) {
 
 const timelineNodeColors: Record<string, string> = {
   submitted:   'bg-primary border-primary',
-  open:        'bg-danger border-danger',
-  in_progress: 'bg-warning border-warning',
+  'under-review':        'bg-danger border-danger',
+  'in-progress': 'bg-warning border-warning',
   resolved:    'bg-success border-success',
   rejected:    'bg-slate-400 border-slate-400',
 }

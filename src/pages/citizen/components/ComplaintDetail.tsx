@@ -17,16 +17,16 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
-const statusBadgeMap: Record<string, 'pending' | 'in_progress' | 'resolved' | 'open' | 'rejected' | 'default'> = {
-  submitted: 'pending', open: 'open', in_progress: 'in_progress', resolved: 'resolved', rejected: 'rejected',
+const statusBadgeMap: Record<string, 'pending' | 'in-progress' | 'resolved' | 'under-review' | 'rejected' | 'default'> = {
+  submitted: 'pending', 'under-review': 'under-review', 'in-progress': 'in-progress', resolved: 'resolved', rejected: 'rejected',
 }
 
 const statusLabel: Record<string, string> = {
-  submitted: 'Submitted', open: 'Under Review', in_progress: 'In Progress', resolved: 'Resolved', rejected: 'Rejected',
+  submitted: 'Submitted', 'under-review': 'Under Review', 'in-progress': 'In Progress', resolved: 'Resolved', rejected: 'Rejected',
 }
 
 const statusIcon: Record<string, string> = {
-  submitted: '📥', open: '📋', in_progress: '⚙️', resolved: '✅', rejected: '❌',
+  submitted: '📥', 'under-review': '📋', 'in-progress': '⚙️', resolved: '✅', rejected: '❌',
 }
 
 function formatDatetime(dateStr: string) {
@@ -38,8 +38,8 @@ function formatDatetime(dateStr: string) {
 
 const timelineNodeColors: Record<string, string> = {
   submitted: 'bg-primary border-primary',
-  open: 'bg-danger border-danger',
-  in_progress: 'bg-warning border-warning',
+  'under-review': 'bg-danger border-danger',
+  'in-progress': 'bg-warning border-warning',
   resolved: 'bg-success border-success',
   rejected: 'bg-slate-400 border-slate-400',
 }

@@ -43,9 +43,6 @@ export function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <CivicIcon className="w-4 h-4 text-white" />
-              </div>
               <span className="text-sm font-bold text-white">ResolveOne</span>
               <span className="hidden sm:inline text-xs text-slate-500 font-medium border border-slate-700 rounded px-1.5 py-0.5 ml-1">Authority</span>
             </Link>
@@ -105,26 +102,27 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <CivicIcon className="w-5 h-5 text-white" />
-            </div>
-            <span className={`text-base font-bold font-display tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              ResolveOne
-            </span>
-          </Link>
+          <div className="flex-1 flex justify-start">
+            <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+              <span className={`text-base font-bold font-display tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                ResolveOne
+              </span>
+            </Link>
+          </div>
 
           {/* Center nav — public links */}
           {(isLanding || isCitizenSection) && (
-            <nav className="hidden md:flex items-center gap-1">
-              <NavLink to="/" label="Home" dark={isDark} exact />
-              <NavLink to="/citizen/verify" label="Report Issue" dark={isDark} />
-              <NavLink to="/citizen/track" label="Track Complaint" dark={isDark} />
-            </nav>
+            <div className="hidden md:flex items-center justify-center">
+              <nav className="flex items-center gap-1">
+                <NavLink to="/" label="Home" dark={isDark} exact />
+                <NavLink to="/citizen/verify" label="Report Issue" dark={isDark} activePaths={['/citizen/verify', '/citizen/report']} />
+                <NavLink to="/citizen/track" label="Track Complaint" dark={isDark} />
+              </nav>
+            </div>
           )}
 
           {/* Right actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex-1 flex items-center justify-end gap-2 shrink-0">
             {/* Dark/light toggle */}
             <button
               onClick={toggleTheme}
@@ -201,7 +199,7 @@ export function Navbar() {
         <div className={`md:hidden border-t animate-fade-in ${isDark ? 'bg-navy-950 border-navy-800' : 'bg-white border-slate-100'}`}>
           <div className="px-4 py-3 space-y-1">
             <MobileNavLink to="/" label="Home" dark={isDark} exact />
-            <MobileNavLink to="/citizen/verify" label="Report Issue" dark={isDark} />
+            <MobileNavLink to="/citizen/verify" label="Report Issue" dark={isDark} activePaths={['/citizen/verify', '/citizen/report']} />
             <MobileNavLink to="/citizen/track" label="Track Complaint" dark={isDark} />
             {isLanding && (
               <MobileNavLink to="/authority/login" label="Authority Login" dark={isDark} />
@@ -224,9 +222,12 @@ function CivicIcon({ className }: { className?: string }) {
   )
 }
 
-function NavLink({ to, label, dark, exact }: { to: string; label: string; dark: boolean; exact?: boolean }) {
+function NavLink({ to, label, dark, exact, activePaths }: { to: string; label: string; dark: boolean; exact?: boolean; activePaths?: string[] }) {
   const location = useLocation()
-  const isActive = exact ? location.pathname === to : (location.pathname === to || (to !== '/' && location.pathname.startsWith(to + '/')))
+  let isActive = exact ? location.pathname === to : (location.pathname === to || (to !== '/' && location.pathname.startsWith(to + '/')))
+  if (activePaths) {
+    isActive = activePaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))
+  }
   return (
     <Link
       to={to}
@@ -242,9 +243,12 @@ function NavLink({ to, label, dark, exact }: { to: string; label: string; dark: 
   )
 }
 
-function MobileNavLink({ to, label, dark, exact }: { to: string; label: string; dark: boolean; exact?: boolean }) {
+function MobileNavLink({ to, label, dark, exact, activePaths }: { to: string; label: string; dark: boolean; exact?: boolean; activePaths?: string[] }) {
   const location = useLocation()
-  const isActive = exact ? location.pathname === to : (location.pathname === to || (to !== '/' && location.pathname.startsWith(to + '/')))
+  let isActive = exact ? location.pathname === to : (location.pathname === to || (to !== '/' && location.pathname.startsWith(to + '/')))
+  if (activePaths) {
+    isActive = activePaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))
+  }
   return (
     <Link
       to={to}

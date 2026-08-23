@@ -21,10 +21,10 @@ function formatDate(dateStr: string) {
 }
 
 // Map DB status to Badge variant
-const statusBadgeMap: Record<string, 'pending' | 'in_progress' | 'resolved' | 'open' | 'rejected' | 'default'> = {
+const statusBadgeMap: Record<string, 'pending' | 'in-progress' | 'resolved' | 'under-review' | 'rejected' | 'default'> = {
   submitted: 'pending',
-  open: 'open',
-  in_progress: 'in_progress',
+  'under-review': 'under-review',
+  'in-progress': 'in-progress',
   resolved: 'resolved',
   rejected: 'rejected',
 }

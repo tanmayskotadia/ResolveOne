@@ -1,6 +1,6 @@
 type BadgeVariant =
-  | 'open'
-  | 'in_progress'
+  | 'under-review'
+  | 'in-progress'
   | 'resolved'
   | 'rejected'
   | 'pending'
@@ -20,12 +20,12 @@ const variantConfig: Record<
   BadgeVariant,
   { classes: string; dotColor: string; defaultLabel: string }
 > = {
-  open: {
+  'under-review': {
     classes: 'bg-red-50 text-danger border border-red-200',
     dotColor: 'bg-danger',
     defaultLabel: 'Open',
   },
-  in_progress: {
+  'in-progress': {
     classes: 'bg-amber-50 text-warning border border-amber-200',
     dotColor: 'bg-warning',
     defaultLabel: 'In Progress',

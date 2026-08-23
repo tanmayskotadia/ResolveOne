@@ -1,6 +1,6 @@
 // ─── Form State (used by multi-step wizard) ───────────────────────────────────
 
-export type ComplaintStatus = 'submitted' | 'open' | 'in_progress' | 'resolved' | 'rejected'
+export type ComplaintStatus = 'submitted' | 'under-review' | 'in-progress' | 'resolved' | 'rejected'
 
 export interface ComplaintData {
   language: string

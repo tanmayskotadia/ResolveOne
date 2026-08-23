@@ -42,8 +42,8 @@ function resolveResolutionPhotoUrl(rawUrl: string | null | undefined): string | 
 
 const STATUS_LABELS: Record<ComplaintStatus, string> = {
   submitted:    'Complaint Registered',
-  open:         'Under Review',
-  in_progress:  'In Progress',
+  'under-review':         'Under Review',
+  'in-progress':  'In Progress',
   resolved:     'Resolved',
   rejected:     'Rejected',
 }
@@ -51,16 +51,16 @@ const STATUS_LABELS: Record<ComplaintStatus, string> = {
 // The 4-stage civic pipeline shown in the timeline
 const PIPELINE_STAGES: { key: ComplaintStatus | 'submitted'; label: string; description: string }[] = [
   { key: 'submitted',   label: 'Complaint Registered', description: 'Your complaint has been received.' },
-  { key: 'open',        label: 'Under Review',         description: 'Our team is reviewing your complaint.' },
-  { key: 'in_progress', label: 'In Progress',          description: 'Work has begun to resolve this issue.' },
+  { key: 'under-review',        label: 'Under Review',         description: 'Our team is reviewing your complaint.' },
+  { key: 'in-progress', label: 'In Progress',          description: 'Work has begun to resolve this issue.' },
   { key: 'resolved',    label: 'Resolved',             description: 'Issue has been resolved. Thank you.' },
 ]
 
 // Ordering for comparing progress
 const STATUS_ORDER: Record<string, number> = {
   submitted:   0,
-  open:        1,
-  in_progress: 2,
+  'under-review':        1,
+  'in-progress': 2,
   resolved:    3,
   rejected:    99,
 }
@@ -77,8 +77,8 @@ function getStageState(stageKey: string, currentStatus: ComplaintStatus): 'done'
 function statusBadgeClass(status: ComplaintStatus): string {
   const map: Record<ComplaintStatus, string> = {
     submitted:   'bg-slate-100 text-slate-700 ring-slate-200',
-    open:        'bg-blue-50   text-blue-700   ring-blue-200',
-    in_progress: 'bg-amber-50 text-amber-700 ring-amber-200',
+    'under-review':        'bg-blue-50   text-blue-700   ring-blue-200',
+    'in-progress': 'bg-amber-50 text-amber-700 ring-amber-200',
     resolved:    'bg-emerald-50 text-emerald-700 ring-emerald-200',
     rejected:    'bg-red-50   text-red-700   ring-red-200',
   }
@@ -540,7 +540,7 @@ function PipelineTimeline({ currentStatus, history, createdAt, isDark }: { curre
 
 function StatusWidget({ status, isRejected, isDark }: { status: ComplaintStatus, isRejected: boolean, isDark?: boolean }) {
   const isResolved = status === 'resolved'
-  const isInProgress = status === 'in_progress'
+  const isInProgress = status === 'in-progress'
   
   let icon = (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-primary">
