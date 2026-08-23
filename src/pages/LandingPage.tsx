@@ -237,7 +237,7 @@ export function LandingPage() {
               </h1>
 
               <p className={`text-lg leading-relaxed mb-8 max-w-xl ${subClass}`}>
-                ResolveOne bridges the gap between citizens and municipal authorities. Submit complaints, monitor resolution progress, and hold authorities accountable — all in one platform.
+                ResolveOne bridges the gap between citizens and municipal authorities. Submit complaints, monitor resolution progress, and hold authorities accountable, all in one platform.
               </p>
 
               {/* CTAs */}
@@ -319,7 +319,7 @@ export function LandingPage() {
             <p className={`text-xs font-bold uppercase tracking-widest mb-3 ${isDark ? 'text-primary-400' : 'text-primary'}`}>Your Voice Matters</p>
             <h2 className={`text-3xl sm:text-4xl ${headingClass} mb-4`}>Simple. Transparent. Accountable.</h2>
             <p className={`text-base max-w-xl mx-auto ${subClass}`}>
-              From reporting an issue to seeing proof of resolution — every step of your citizen journey is trackable.
+              From reporting an issue to seeing proof of resolution, every step of your citizen journey is trackable.
             </p>
           </div>
 
@@ -368,8 +368,8 @@ export function LandingPage() {
                 {[
                   { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 012.43 8.326 13.019 13.019 0 012 5V3.5z" clipRule="evenodd" /></svg>, text: 'Citizens call helplines and complaints are never recorded.' },
                   { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>, text: 'Manual paperwork means issues take weeks to even reach the right officer.' },
-                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" /></svg>, text: 'No visibility — citizens have no way to track if their complaint is being worked on.' },
-                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81v3.69c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.69l-2.22-2.219a.75.75 0 00-1.06 0l-1.91 1.909.47.47a.75.75 0 11-1.06 1.06L6.53 8.091a.75.75 0 00-1.06 0l-2.97 2.97zM12 7a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" /></svg>, text: 'No proof of resolution — work gets marked done without verification.' },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" /></svg>, text: 'No visibility because citizens have no way to track if their complaint is being worked on.' },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81v3.69c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.69l-2.22-2.219a.75.75 0 00-1.06 0l-1.91 1.909.47.47a.75.75 0 11-1.06 1.06L6.53 8.091a.75.75 0 00-1.06 0l-2.97 2.97zM12 7a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" /></svg>, text: 'No proof of resolution, as work gets marked done without verification.' },
                 ].map(p => (
                   <div key={p.text} className={`flex items-start gap-3 p-4 rounded-xl ${isDark ? 'bg-red-950/30 border border-red-900/50' : 'bg-red-50 border border-red-100'}`}>
                     <span className="text-red-500 mt-0.5 shrink-0">{p.icon}</span>
@@ -387,10 +387,10 @@ export function LandingPage() {
               </h2>
               <div className="space-y-4">
                 {[
-                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>, text: 'Digital complaint registration with photo and map location — permanent record.' },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>, text: 'Digital complaint registration with photo and map location for a permanent record.' },
                   { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clipRule="evenodd" /></svg>, text: 'Authority portal for instant complaint routing and status updates.' },
-                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>, text: 'Citizens track every status change — Submitted → Under Review → In Progress → Resolved.' },
-                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81v3.69c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.69l-2.22-2.219a.75.75 0 00-1.06 0l-1.91 1.909.47.47a.75.75 0 11-1.06 1.06L6.53 8.091a.75.75 0 00-1.06 0l-2.97 2.97zM12 7a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" /></svg>, text: 'Resolution proof photo uploaded by officer — visible to the citizen publicly.' },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>, text: 'Citizens track every status change: Submitted → Under Review → In Progress → Resolved.' },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81v3.69c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.69l-2.22-2.219a.75.75 0 00-1.06 0l-1.91 1.909.47.47a.75.75 0 11-1.06 1.06L6.53 8.091a.75.75 0 00-1.06 0l-2.97 2.97zM12 7a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" /></svg>, text: 'Resolution proof photo uploaded by officer, which is visible to the citizen publicly.' },
                 ].map(p => (
                   <div key={p.text} className={`flex items-start gap-3 p-4 rounded-xl ${isDark ? 'bg-emerald-950/30 border border-emerald-900/50' : 'bg-emerald-50 border border-emerald-100'}`}>
                     <span className="text-emerald-500 mt-0.5 shrink-0">{p.icon}</span>
@@ -421,7 +421,7 @@ export function LandingPage() {
               isDark={isDark}
               icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M10 2a6 6 0 00-6 6c0 1.887-.454 3.665-1.257 5.234a.75.75 0 00.515 1.076 32.91 32.91 0 003.256.508 3.5 3.5 0 006.972 0 32.903 32.903 0 003.256-.508.75.75 0 00.515-1.076A11.448 11.448 0 0116 8a6 6 0 00-6-6zM8.05 14.943a33.54 33.54 0 003.9 0 2 2 0 01-3.9 0z" clipRule="evenodd" /></svg>}
               title="Citizen Complaint Registration"
-              desc="File civic complaints in minutes — no account needed. Just Aadhaar-based identity verification for accountability."
+              desc="File civic complaints in minutes without needing an account. Just Aadhaar-based identity verification for accountability."
             />
             <FeatureCard
               isDark={isDark}
@@ -451,7 +451,7 @@ export function LandingPage() {
               isDark={isDark}
               icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" /></svg>}
               title="Aadhaar-Based Identity Verification"
-              desc="Complaints are tied to a hashed Aadhaar identifier — no data is stored in plain text. Citizens stay anonymous but accountable."
+              desc="Complaints are tied to a hashed Aadhaar identifier, so no data is stored in plain text. Citizens stay anonymous but accountable."
             />
           </div>
         </div>
@@ -469,14 +469,14 @@ export function LandingPage() {
                 Designed around transparency and accountability
               </h2>
               <p className={`text-base leading-relaxed mb-10 ${subClass}`}>
-                ResolveOne was built for the digital India initiative — bringing government services online with citizen-first design, data privacy, and zero tolerance for unresolved complaints.
+                ResolveOne was built for the digital India initiative, bringing government services online with citizen-first design, data privacy, and zero tolerance for unresolved complaints.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <TrustPillar
                   isDark={isDark}
                   icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" /></svg>}
                   title="Privacy-First Identity"
-                  desc="Aadhaar numbers are cryptographically hashed — never stored in plain text. Your identity stays yours."
+                  desc="Aadhaar numbers are cryptographically hashed and never stored in plain text. Your identity stays yours."
                 />
                 <TrustPillar
                   isDark={isDark}
