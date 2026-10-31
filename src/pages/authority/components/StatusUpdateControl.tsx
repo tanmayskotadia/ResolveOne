@@ -65,6 +65,8 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
       const { error: updateError } = await supabase.rpc('update_complaint_status', {
         p_id: complaint.id, p_status: newStatus, p_note: note.trim() || null,
         p_resolution_photo_url: resolutionPhotoUrl || null,
+        p_expected_status: complaint.status,
+        p_expected_updated_at: complaint.updated_at ?? null,
       })
       if (updateError) throw new Error('Could not save the status and history. ' + updateError.message)
 
@@ -144,6 +146,7 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
           </label>
           <textarea
             id="note"
+            maxLength={4000}
             rows={2}
             className={`w-full rounded-lg border p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-900 border-navy-700 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400'}`}
             placeholder="e.g., Assigned to maintenance crew..."

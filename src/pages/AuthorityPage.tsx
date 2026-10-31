@@ -40,11 +40,12 @@ export function AuthorityPage() {
 
     try {
       const rows: ComplaintRow[] = []
-      for (let offset = 0; ; offset += 1000) {
+      for (let offset = 0; ;) {
         const { data, error: err } = await supabase.from('complaints').select('*').order('created_at', { ascending: false }).order('id').range(offset, offset + 999)
         if (err) throw err
         rows.push(...data as ComplaintRow[])
-        if (data.length < 1000) break
+        if (data.length === 0) break
+        offset += data.length
       }
       setComplaints(rows)
     } catch {

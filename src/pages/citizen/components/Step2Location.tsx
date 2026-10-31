@@ -34,6 +34,11 @@ interface Step2Props {
 // Default center (e.g. Ahmedabad) if geolocation fails or before it loads
 const DEFAULT_CENTER: [number, number] = [23.0225, 72.5714]
 
+function MapEvents({ onLocation }: { onLocation: (lat: number, lng: number) => void }) {
+  useMapEvents({ click: event => onLocation(event.latlng.lat, event.latlng.lng) })
+  return null
+}
+
 export function Step2Location({ data, onChange, onNext, onBack }: Step2Props) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -41,14 +46,17 @@ export function Step2Location({ data, onChange, onNext, onBack }: Step2Props) {
   const [geoError, setGeoError] = useState<string | null>(null)
   const [reversing, setReversing] = useState(false)
   const markerRef = useRef<LeafletMarker>(null)
+  const reverseRequest = useRef<AbortController | null>(null)
+  useEffect(() => () => reverseRequest.current?.abort(), [])
 
   // Use useMemo to prevent re-initializing center map randomly
   const center = useMemo<[number, number]>(() => {
-    if (data.lat && data.lng) return [data.lat, data.lng]
+    if (data.lat !== null && data.lng !== null) return [data.lat, data.lng]
     return DEFAULT_CENTER
   }, [data.lat, data.lng])
 
   useEffect(() => {
+    let cancelled = false
     // If we already have a location, don't ask again
     if (data.lat !== null && data.lng !== null) {
       setLoadingLoc(false)
@@ -63,62 +71,64 @@ export function Step2Location({ data, onChange, onNext, onBack }: Step2Props) {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (cancelled) return
         const lat = position.coords.latitude
         const lng = position.coords.longitude
-        onChange({ lat, lng })
+        onChange({ lat, lng, address: '' })
         reverseGeocode(lat, lng)
         setLoadingLoc(false)
       },
       (err) => {
+        if (cancelled) return
         console.warn('Geolocation error:', err)
         setGeoError('Could not get your exact location. Please drag the pin on the map.')
         setLoadingLoc(false)
       },
       { enableHighAccuracy: true, timeout: 10000 }
     )
+    return () => { cancelled = true; reverseRequest.current?.abort() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const reverseGeocode = async (lat: number, lng: number) => {
+    reverseRequest.current?.abort()
+    const controller = new AbortController()
+    reverseRequest.current = controller
     setReversing(true)
+    setGeoError(null)
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+        { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]) },
       )
       if (!res.ok) throw new Error('Network response was not ok')
       const result = await res.json()
-      if (result && result.display_name) {
+      if (!result?.display_name) throw new Error('No address found')
+      if (!controller.signal.aborted && result?.display_name) {
         onChange({ address: result.display_name })
       }
-    } catch (error) {
-      console.error('Reverse geocoding failed:', error)
+    } catch {
+      if (!controller.signal.aborted) setGeoError('Address lookup failed. Enter the address manually for the selected pin.')
     } finally {
-      setReversing(false)
+      if (!controller.signal.aborted) setReversing(false)
     }
   }
 
-  // Component to handle map clicks and marker drags
-  function MapEvents() {
-    useMapEvents({
-      click(e) {
-        const { lat, lng } = e.latlng
-        onChange({ lat, lng })
-        reverseGeocode(lat, lng)
-      },
-    })
-    return null
+  function selectLocation(lat: number, lng: number) {
+    onChange({ lat, lng, address: '' })
+    void reverseGeocode(lat, lng)
   }
 
   const handleDragEnd = () => {
     const marker = markerRef.current
     if (marker != null) {
       const { lat, lng } = marker.getLatLng()
-      onChange({ lat, lng })
-      reverseGeocode(lat, lng)
+      selectLocation(lat, lng)
     }
   }
 
-  const isNextDisabled = !data.lat || !data.lng || !data.address.trim()
+  const hasLocation = data.lat !== null && data.lng !== null && Number.isFinite(data.lat) && Number.isFinite(data.lng) && Math.abs(data.lat) <= 90 && Math.abs(data.lng) <= 180
+  const isNextDisabled = !hasLocation || !data.address.trim() || reversing
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -140,12 +150,12 @@ export function Step2Location({ data, onChange, onNext, onBack }: Step2Props) {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <MapEvents />
-              {data.lat && data.lng && (
+              <MapEvents onLocation={selectLocation} />
+              {hasLocation && (
                 <Marker
                   draggable={true}
                   eventHandlers={{ dragend: handleDragEnd }}
-                  position={[data.lat, data.lng]}
+                  position={[data.lat!, data.lng!]}
                   ref={markerRef}
                   icon={DefaultIcon}
                 />
@@ -169,6 +179,7 @@ export function Step2Location({ data, onChange, onNext, onBack }: Step2Props) {
         <div className="space-y-4">
           <Input
             id="address"
+            maxLength={2000}
             label="Address"
             placeholder="Fetching address..."
             value={data.address}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, Button, Badge } from '../../../components/ui'
 import type { ComplaintData } from '../../../types/complaint'
@@ -9,17 +9,19 @@ import toast from 'react-hot-toast'
 import { ReportIntelligence } from '../../../components/ReportIntelligence'
 
 interface Step4Props {
+  submissionId: string
   data: ComplaintData
   onBack: () => void
 }
 
-export function Step4Review({ data, onBack }: Step4Props) {
+export function Step4Review({ data, submissionId, onBack }: Step4Props) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const { citizenHash } = useCitizen()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
+  const submitLock = useRef(false)
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   useEffect(() => {
@@ -29,10 +31,12 @@ export function Step4Review({ data, onBack }: Step4Props) {
   }, [data.photoFile])
 
   const handleSubmit = async () => {
+    if (submitLock.current) return
     if (!citizenHash) {
       toast.error('Identity verification required. Please go back and verify.')
       return
     }
+    submitLock.current = true
     setIsSubmitting(true)
     setError(null)
 
@@ -44,14 +48,14 @@ export function Step4Review({ data, onBack }: Step4Props) {
       //    If it fails (e.g. Storage RLS not yet configured), we warn but continue.
       if (data.photoFile) {
         try {
-          const fileExt = data.photoFile.name.split('.').pop()
-          const fileName = `anon_${citizenHash.slice(0, 8)}_${Date.now()}.${fileExt}`
+          const fileExt = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[data.photoFile.type] || 'jpg'
+          const fileName = `complaint_${submissionId}.${fileExt}`
 
           const { error: uploadError } = await supabase.storage
             .from('complaint-photos')
             .upload(fileName, data.photoFile)
 
-          if (uploadError) {
+          if (uploadError && String(uploadError.statusCode) !== '409') {
             // Log for debugging but don't throw — complaint still gets submitted
             console.warn('[Step4Review] Photo upload failed:', uploadError.message)
             photoWarning = 'Photo could not be uploaded. Your complaint will still be submitted without it.'
@@ -72,12 +76,10 @@ export function Step4Review({ data, onBack }: Step4Props) {
         toast(photoWarning, { icon: '⚠️', duration: 6000 })
       }
 
-      // 2. Insert complaint with citizen_identifier_hash (no auth.uid())
-      const { error: dbError } = await supabase
-        .from('complaints')
-        .insert({
-          citizen_id: null,
-          citizen_identifier_hash: citizenHash,
+      // Insert and return this exact complaint's code in one idempotent transaction.
+      const { data: code, error: dbError } = await supabase.rpc('submit_complaint', {
+        p_id: submissionId, p_hash: citizenHash,
+        p_report: {
           description: data.description,
           category: data.category,
           source: data.source,
@@ -85,19 +87,13 @@ export function Step4Review({ data, onBack }: Step4Props) {
           lng: data.lng,
           address: data.address,
           photo_url,  // null if upload failed — that's acceptable
-          status: 'submitted',
-        })
-        // REMOVED .select() here because anonymous users do not have SELECT permissions.
-        // Doing .select() causes the query to fail with an RLS error on the SELECT portion.
+        },
+      })
 
       if (dbError) throw new Error('Failed to submit complaint. ' + dbError.message)
 
-      // 3. Fetch the generated complaint ID using the secure RPC
-      const { data: code, error: rpcError } = await supabase
-        .rpc('get_latest_complaint_code_by_hash', { p_hash: citizenHash })
-
-      if (rpcError || !code) {
-        throw new Error('Complaint was submitted, but we could not retrieve your complaint ID. Please try tracking it using your details or contact support.')
+      if (!code) {
+        throw new Error('The tracking code was not received. Retry safely to recover it; your report will not be duplicated.')
       }
 
       toast.success('Your complaint has been submitted successfully!')
@@ -107,6 +103,7 @@ export function Step4Review({ data, onBack }: Step4Props) {
       setError(err.message || 'An unexpected error occurred.')
       toast.error(err.message || 'Failed to submit complaint.')
     } finally {
+      submitLock.current = false
       setIsSubmitting(false)
     }
   }
@@ -171,7 +168,7 @@ export function Step4Review({ data, onBack }: Step4Props) {
         </div>
         <div className="p-4">
           <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Location</p>
-          <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{data.address || (data.lat ? `${data.lat?.toFixed(5)}, ${data.lng?.toFixed(5)}` : 'Not set')}</p>
+          <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{data.address || (data.lat !== null && data.lng !== null ? `${data.lat.toFixed(5)}, ${data.lng.toFixed(5)}` : 'Not set')}</p>
         </div>
         {previewUrl && (
           <div className="p-4">

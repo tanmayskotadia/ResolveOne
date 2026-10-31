@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from starlette.concurrency import run_in_threadpool
 
 from core import CATEGORIES, completed_samples, distance_m, features, historical_estimate, hotspots, located
@@ -22,8 +22,6 @@ from models import MODEL_LOCK, classify_image, classify_text, embeddings
 
 load_dotenv(Path(__file__).with_name('.env'))
 app = FastAPI(title="ResolveOne intelligence", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(','),
-                   allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"])
 Image.MAX_IMAGE_PIXELS = 20_000_000
 RATE_LOCK = Lock()
 TRAIN_LOCK = Lock()
@@ -58,6 +56,7 @@ async def resource_limits(request: Request, call_next):
 
 
 class TextInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     description: str = Field(min_length=12, max_length=4000)
 
 
@@ -114,14 +113,15 @@ def authority(authorization: str | None = Header(default=None)):
 
 def pages(table, select, token=None, extra=None):
     result = []
-    for offset in range(0, 20001, 1000):
+    offset = 0
+    while True:
         batch = rest(table, {"select": select, "order": "id.asc", "limit": 1000, "offset": offset, **(extra or {})}, token)
         result.extend(batch)
         if len(result) > 20000:
             raise HTTPException(413, "This dataset exceeds 20,000 records. Scope the service to a municipality before analyzing it.")
-        if len(batch) < 1000:
+        if not batch:
             return result
-    return result
+        offset += len(batch)
 
 
 def dataset(token=None):
@@ -138,16 +138,42 @@ def model_dir():
 
 def model_metadata():
     path = model_dir() / 'eta.json'
-    return json.loads(path.read_text()) if path.exists() else None
+    try:
+        meta = json.loads(path.read_text())
+        numeric = ['sample_count', 'validation_count', 'mae_hours', 'baseline_mae_hours', 'error_hours_p80']
+        if not isinstance(meta, dict) or any(not isinstance(meta.get(key), (int, float))
+                or not np.isfinite(meta[key]) or meta[key] < 0 for key in numeric):
+            return None
+        filename = meta.get('file')
+        if (not isinstance(filename, str) or Path(filename).name != filename
+                or not (model_dir() / filename).is_file() or not isinstance(meta.get('categories'), list)
+                or not meta['categories'] or any(category not in CATEGORIES for category in meta['categories'])
+                or not isinstance(meta.get('trained_at'), str)):
+            return None
+        return meta
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def load_eta():
+    if os.getenv('ENABLE_ML', 'true').lower() != 'true':
+        return None, None
+    meta = model_metadata()
+    if meta:
+        try:
+            from catboost import CatBoostRegressor
+            model = CatBoostRegressor()
+            model.load_model(str(model_dir() / meta['file']))
+            return meta, model
+        except Exception:
+            pass  # A missing/incompatible model must not break historical estimates or hotspots.
+    return None, None
 
 
 def estimate(data, samples):
     with MODEL_LOCK:
-        meta = model_metadata()
+        meta, model = load_eta()
         if meta and data.category in meta['categories'] and data.lat is not None and data.lng is not None:
-            from catboost import CatBoostRegressor
-            model = CatBoostRegressor()
-            model.load_model(str(model_dir() / meta['file']))
             row = {"category": data.category, "lat": data.lat, "lng": data.lng,
                    "created_at": datetime.now(timezone.utc).isoformat()}
             prediction = max(0, float(model.predict([features(row)])[0]))
@@ -170,7 +196,7 @@ def inference(operation, *args):
 def health():
     return {"status": "ok", "ml_enabled": os.getenv('ENABLE_ML', 'true').lower() == 'true',
             "database_configured": bool(os.getenv('SUPABASE_URL') and os.getenv('SUPABASE_SERVICE_ROLE_KEY')),
-            "eta_trained": (model_dir() / 'eta.json').exists()}
+            "eta_trained": model_metadata() is not None}
 
 
 @app.post('/classify/text')
@@ -199,10 +225,8 @@ async def photo(file: UploadFile = File(...)):
 @app.post('/duplicates')
 def duplicates(data: NearbyInput):
     since = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
-    rows = rest('complaints', {"select": "id,complaint_code,description,category,status,lat,lng",
-                              "created_at": f"gte.{since}", "status": "not.in.(resolved,rejected)",
-                              "and": f"(lat.gte.{max(-90, data.lat - .0023)},lat.lte.{min(90, data.lat + .0023)})",
-                              "order": "created_at.desc", "limit": 501})
+    rows = pages('rpc/nearby_complaints', 'id,complaint_code,description,category,status,lat,lng',
+                 extra={'p_lat': data.lat, 'p_lng': data.lng, 'p_since': since, 'p_limit': 501})
     limited = len(rows) > 500
     nearby = [r for r in rows[:500] if located(r) and distance_m(data.lat, data.lng, r['lat'], r['lng']) <= 250]
     if not nearby:
@@ -234,11 +258,8 @@ def insights(token: str = Depends(authority)):
     rows, samples = dataset(token)
     predictions = {}
     with MODEL_LOCK:
-        meta = model_metadata()
+        meta, model = load_eta()
         if meta:
-            from catboost import CatBoostRegressor
-            model = CatBoostRegressor()
-            model.load_model(str(model_dir() / meta['file']))
             active = [r for r in rows if r['status'] not in ('resolved', 'rejected') and located(r) and r['category'] in meta['categories']]
             if active:
                 hours = model.predict([features(r) for r in active])
@@ -249,7 +270,8 @@ def insights(token: str = Depends(authority)):
                                               'message': 'Total time from submission; not a deadline.'}
     return {"hotspots": hotspots(rows), "estimates": {category: historical_estimate(category, samples) for category in CATEGORIES},
             "predictions": predictions,
-            "completed_samples": len(samples), "model": model_metadata(), "total": len(rows),
+            "completed_samples": len(samples), "trainable_samples": sum(located(row) for row, _ in samples),
+            "model": meta, "total": len(rows),
             "generated_at": datetime.now(timezone.utc).isoformat()}
 
 
@@ -271,6 +293,8 @@ def train(token: str = Depends(authority)):
             raise HTTPException(422, 'More non-overlapping resolution history is needed for a reliable time-based validation split.')
         train_x = [features(row) for row, _ in training]
         train_y = [hours for _, hours in training]
+        if np.ptp(train_y) == 0:
+            raise HTTPException(422, 'Resolution times are all identical. Keep using the historical range until more varied history is available.')
         test_x = [features(row) for row, _ in samples[split:]]
         test_y = [hours for _, hours in samples[split:]]
         x = [features(row) for row, _ in samples]
@@ -295,6 +319,10 @@ def train(token: str = Depends(authority)):
             target.write_text(json.dumps(meta))
             target.replace(model_dir() / 'eta.json')
         return meta
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(503, 'Training could not complete. Historical estimates remain available; please retry later.') from None
     finally:
         TRAIN_LOCK.release()
 
@@ -316,3 +344,9 @@ async def transcribe(file: UploadFile = File(...)):
             return {"text": response.json().get('transcript') or response.json().get('text', '')}
     except (httpx.HTTPError, ValueError):
         raise HTTPException(503, 'Voice transcription is unavailable. Please retry or type your report.') from None
+
+
+# CORS must wrap the limit middleware too, so browsers can read 413/429 errors.
+app.add_middleware(CORSMiddleware,
+                   allow_origins=[origin.strip() for origin in os.getenv('ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')],
+                   allow_methods=['GET', 'POST'], allow_headers=['Authorization', 'Content-Type'])

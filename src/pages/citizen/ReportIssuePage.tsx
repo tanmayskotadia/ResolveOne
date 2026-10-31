@@ -21,6 +21,7 @@ export function ReportIssuePage() {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const [currentStep, setCurrentStep] = useState(1)
+  const [submissionId, setSubmissionId] = useState(() => crypto.randomUUID())
   const [complaintData, setComplaintData] = useState<ComplaintData>({
     language: 'English',
     description: '',
@@ -39,6 +40,7 @@ export function ReportIssuePage() {
 
   const updateData = (updates: Partial<ComplaintData>) => {
     setComplaintData(prev => ({ ...prev, ...updates }))
+    setSubmissionId(crypto.randomUUID())
   }
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length))
@@ -67,7 +69,7 @@ export function ReportIssuePage() {
             <Step3Photo data={complaintData} onChange={updateData} onNext={nextStep} onBack={prevStep} />
           )}
           {currentStep === 4 && (
-            <Step4Review data={complaintData} onBack={prevStep} />
+            <Step4Review data={complaintData} submissionId={submissionId} onBack={prevStep} />
           )}
         </div>
       </div>

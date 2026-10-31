@@ -2,6 +2,8 @@
 
 For the current intelligence features, apply `intelligence_upgrade.sql` **after** the existing schema and resolution-photo scripts. It replaces anonymous demo authority access with authenticated officers and adds atomic status/history updates. See `../ml_service/README.md` for complete setup. Run the upgrade last; the older baseline recreates demo policies if rerun afterward.
 
+Next, apply `logic_fixes.sql` in a separate SQL editor execution before running the latest frontend/API. It fixes submission retry races, stale officer writes, legacy status values, and nearby-search candidate filtering. Apply migrations in this order: original schema → resolution scripts → intelligence upgrade → logic fixes.
+
 ## Which file to run
 
 **Run only this file:**

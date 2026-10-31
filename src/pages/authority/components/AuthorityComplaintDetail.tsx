@@ -260,7 +260,7 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
 
         {/* Right Column: Actions & Timeline */}
         <div className="space-y-4">
-          <StatusUpdateControl complaint={complaint} onStatusUpdated={handleStatusUpdated} />
+          <StatusUpdateControl key={`${complaint.id}:${complaint.updated_at ?? complaint.status}`} complaint={complaint} onStatusUpdated={handleStatusUpdated} />
 
           <div className={`rounded-xl border shadow-sm px-5 py-4 ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-200'}`}>
             <p className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Status History</p>

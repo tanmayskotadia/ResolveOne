@@ -37,6 +37,7 @@ export interface Insights {
   estimates: Record<string, Estimate>
   predictions: Record<string, Estimate>
   completed_samples: number
+  trainable_samples: number
   model: ModelInfo | null
   total: number
   generated_at: string

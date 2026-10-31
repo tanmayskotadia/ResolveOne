@@ -1,4 +1,5 @@
 import io
+import json
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -32,6 +33,11 @@ def row(index=0, category=CATEGORIES[0], **updates):
     return {'id': str(index), 'category': category, 'description': 'A pile of rubbish on the road',
             'complaint_code': f'CC-2026-{index:05}', 'status': 'submitted', 'lat': 23.02 + index * .0001,
             'lng': 72.57, 'created_at': datetime.now(timezone.utc).isoformat(), **updates}
+
+
+def mock_rows(monkeypatch, rows):
+    monkeypatch.setattr(service, 'rest', lambda table, params, token=None:
+                        rows[params.get('offset', 0):params.get('offset', 0) + params.get('limit', 1000)])
 
 
 def samples(count=60):
@@ -144,7 +150,7 @@ def test_oversize_body_rejected(client):
 
 
 def test_duplicate_response_does_not_expose_private_description(client, monkeypatch):
-    monkeypatch.setattr(service, 'rest', lambda *args, **kwargs: [row(1, citizen_identifier_hash='private-hash')])
+    mock_rows(monkeypatch, [row(1, citizen_identifier_hash='private-hash')])
     monkeypatch.setattr(service, 'embeddings', lambda texts: np.ones((len(texts), 1)))
     response = client.post('/duplicates', json={'description': 'A pile of rubbish on the road', 'lat': 23.02, 'lng': 72.57})
     assert response.status_code == 200
@@ -155,7 +161,7 @@ def test_duplicate_response_does_not_expose_private_description(client, monkeypa
 
 
 def test_far_issues_not_duplicates(client, monkeypatch):
-    monkeypatch.setattr(service, 'rest', lambda *args, **kwargs: [row(1, lat=25)])
+    mock_rows(monkeypatch, [row(1, lat=25)])
     assert client.post('/duplicates', json={'description': 'A pile of rubbish on the road', 'lat': 23.02, 'lng': 72.57}).json()['matches'] == []
 
 
@@ -199,3 +205,75 @@ def test_catboost_train_predict_and_insights(client, monkeypatch):
     insights = client.get('/insights').json()
     assert insights['predictions']['100']['source'] == 'catboost'
     assert insights['completed_samples'] == 60
+
+
+def test_pagination_handles_server_page_sizes_smaller_than_requested(monkeypatch):
+    rows = [row(i) for i in range(7)]
+    seen = []
+    def small_pages(table, params, token=None):
+        seen.append(params['offset'])
+        return rows[params['offset']:params['offset'] + 2]
+    monkeypatch.setattr(service, 'rest', small_pages)
+    assert len(service.pages('complaints', 'id')) == 7
+    assert seen == [0, 2, 4, 6, 7]
+
+
+def test_pagination_fails_explicitly_above_limit(monkeypatch):
+    monkeypatch.setattr(service, 'rest', lambda *args: [row()] * 1000)
+    with pytest.raises(service.HTTPException) as error:
+        service.pages('complaints', 'id')
+    assert error.value.status_code == 413
+
+
+def test_whitespace_does_not_count_as_a_description(client):
+    assert client.post('/classify/text', json={'description': ' ' * 20}).status_code == 422
+
+
+def test_limit_errors_include_cors_headers(client):
+    headers = {'Origin': 'http://localhost:5173'}
+    response = client.post('/classify/photo', content=b'x' * (6 * 1024 * 1024 + 1), headers=headers)
+    assert response.status_code == 413
+    assert response.headers['access-control-allow-origin'] == 'http://localhost:5173'
+    service.buckets.clear()
+    for _ in range(30):
+        client.get('/missing', headers=headers)
+    response = client.get('/missing', headers=headers)
+    assert response.status_code == 429
+    assert response.headers['access-control-allow-origin'] == 'http://localhost:5173'
+
+
+@pytest.mark.parametrize('metadata', ['{broken', '{}'])
+def test_damaged_metadata_uses_history(client, monkeypatch, metadata):
+    rows, records = samples()
+    monkeypatch.setattr(service, 'dataset', lambda token=None: (rows, records))
+    (service.model_dir() / 'eta.json').write_text(metadata)
+    response = client.post('/estimate', json={'category': CATEGORIES[0], 'lat': 23, 'lng': 72})
+    assert response.status_code == 200
+    assert response.json()['source'] == 'history'
+
+
+def test_unloadable_eta_model_does_not_break_hotspots(client, monkeypatch):
+    rows, records = samples()
+    monkeypatch.setattr(service, 'dataset', lambda token=None: (rows, records))
+    service.app.dependency_overrides[service.authority] = lambda: 'test-token'
+    (service.model_dir() / 'broken.cbm').write_bytes(b'not a model')
+    meta = {'file': 'broken.cbm', 'sample_count': 60, 'validation_count': 12, 'mae_hours': 2,
+            'baseline_mae_hours': 3, 'error_hours_p80': 4, 'categories': [CATEGORIES[0]], 'trained_at': '2026-01-01'}
+    (service.model_dir() / 'eta.json').write_text(json.dumps(meta))
+    response = client.get('/insights')
+    assert response.status_code == 200
+    assert response.json()['model'] is None
+    assert response.json()['predictions'] == {}
+    assert response.json()['trainable_samples'] == 60
+    assert client.post('/estimate', json={'category': CATEGORIES[0], 'lat': 23, 'lng': 72}).json()['source'] == 'history'
+
+
+def test_identical_resolution_times_do_not_attempt_invalid_training(client, monkeypatch):
+    rows, records = samples()
+    monkeypatch.setattr(service, 'dataset', lambda token=None: (rows, [(row, 12) for row, _ in records]))
+    service.app.dependency_overrides[service.authority] = lambda: 'test-token'
+    response = client.post('/train')
+    assert response.status_code == 422
+    assert 'identical' in response.json()['detail']
+    assert service.TRAIN_LOCK.acquire(blocking=False)
+    service.TRAIN_LOCK.release()

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Card, Button } from '../../../components/ui'
 import { Spinner } from '../../../components/ui/Spinner'
 import type { ComplaintData } from '../../../types/complaint'
@@ -41,31 +41,58 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
   const [sttError, setSttError] = useState<string | null>(null)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
+  const recordingLock = useRef(false)
+  const recordingGeneration = useRef(0)
+  const transcriptionRequest = useRef<AbortController | null>(null)
+
+  useEffect(() => () => {
+    recordingGeneration.current++
+    transcriptionRequest.current?.abort()
+    const recorder = mediaRecorderRef.current
+    if (recorder) {
+      recorder.onstop = null
+      recorder.ondataavailable = null
+      if (recorder.state !== 'inactive') recorder.stop()
+      recorder.stream.getTracks().forEach(track => track.stop())
+    }
+  }, [])
 
   const startRecording = async () => {
+    if (recordingLock.current) return
+    recordingLock.current = true
+    const generation = ++recordingGeneration.current
+    let stream: MediaStream | null = null
     try {
       setSttError(null)
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      if (generation !== recordingGeneration.current) {
+        stream.getTracks().forEach(track => track.stop())
+        return
+      }
       const mediaRecorder = new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
+      const chunks: Blob[] = []
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data)
+          chunks.push(event.data)
         }
       }
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType })
-        stream.getTracks().forEach(track => track.stop())
-        await transcribeAudio(audioBlob)
+        const audioBlob = new Blob(chunks, { type: mediaRecorder.mimeType })
+        mediaRecorder.stream.getTracks().forEach(track => track.stop())
+        if (generation !== recordingGeneration.current) return
+        setIsRecording(false)
+        await transcribeAudio(audioBlob, generation)
       }
 
       mediaRecorder.start()
       setIsRecording(true)
     } catch (err: any) {
+      stream?.getTracks().forEach(track => track.stop())
+      if (generation !== recordingGeneration.current) return
+      recordingLock.current = false
       console.error('Microphone error:', err)
       if (err.name === 'NotAllowedError') {
         setSttError('Microphone access denied. Please allow mic access or use the "Type" tab.')
@@ -76,19 +103,23 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
   }
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
+      setIsTranscribing(true)
     }
   }
 
-  const transcribeAudio = async (blob: Blob) => {
+  const transcribeAudio = async (blob: Blob, generation: number) => {
     setIsTranscribing(true)
     onChange({ source: 'voice' })
+    const controller = new AbortController()
+    transcriptionRequest.current = controller
     try {
       const formData = new FormData()
       formData.append('file', blob, blob.type.includes('mp4') ? 'audio.mp4' : 'audio.webm')
-      const result = await intelligence<{ text: string }>('/transcribe', { form: formData })
+      const result = await intelligence<{ text: string }>('/transcribe', { form: formData, signal: controller.signal })
+      if (controller.signal.aborted || generation !== recordingGeneration.current) return
       // result.transcript contains the English translated text
       const transcript = result.text || ''
       if (transcript) {
@@ -97,23 +128,38 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
         setSttError('Could not understand the audio. Please try again or type.')
       }
     } catch (error) {
+      if (controller.signal.aborted || generation !== recordingGeneration.current) return
       console.error('Transcription error:', error)
       setSttError('Failed to transcribe audio. Please type your issue instead.')
     } finally {
-      setIsTranscribing(false)
+      if (generation === recordingGeneration.current) {
+        recordingLock.current = false
+        setIsTranscribing(false)
+      }
     }
   }
 
   const handleTabChange = (tab: 'type' | 'speak') => {
+    recordingGeneration.current++
+    transcriptionRequest.current?.abort()
+    const recorder = mediaRecorderRef.current
+    if (recorder) {
+      recorder.onstop = null
+      recorder.ondataavailable = null
+      if (recorder.state !== 'inactive') recorder.stop()
+      recorder.stream.getTracks().forEach(track => track.stop())
+    }
+    recordingLock.current = false
+    setIsRecording(false)
+    setIsTranscribing(false)
     setActiveTab(tab)
     if (tab === 'type' && data.source !== 'text') {
       onChange({ source: 'text' })
     }
     setSttError(null)
-    if (isRecording) stopRecording()
   }
 
-  const isNextDisabled = !data.description.trim() || !data.category || !data.language
+  const isNextDisabled = !data.description.trim() || !data.category || !data.language || isRecording || isTranscribing
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -213,6 +259,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
             <textarea
               id="description"
               maxLength={4000}
+              disabled={isRecording || isTranscribing}
               rows={4}
               className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-950 border-navy-800 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
               placeholder="Describe the issue in detail..."

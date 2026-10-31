@@ -22,6 +22,8 @@ Edit the **server** `.env` with your Supabase URL, public anon key, and service-
 
 Apply `database/intelligence_upgrade.sql` in the Supabase SQL editor **after** the existing schema and resolution-photo migrations. The migration removes demo anonymous authority access, makes new signups citizens, prevents users from promoting their own role, and adds the atomic status/history RPC. Do not rerun the old schema afterward because it recreates demo policies.
 
+Then run `database/logic_fixes.sql` in a **separate execution**. This adds idempotent complaint submission, checks for conflicting officer status changes, normalizes legacy `open` statuses, and installs the private geographic duplicate-search RPC. Both the current frontend and ML API require these RPCs. For an existing installation, apply this migration before deploying this version. Its SQL is tested against an isolated PostgreSQL runtime with `npm run test:database`; no test uses your live database.
+
 Create the officer in Supabase Authentication, then an administrator can grant the role using that user's exact UUID:
 
 ```sql
@@ -76,6 +78,8 @@ Database reads paginate explicitly and fail with a clear message above 20,000 re
 # From smart_cities
 npm run build
 npm run lint
+npm run test:database
+npm run test:ui
 ```
 
 The API tests cover actual CatBoost training/prediction on isolated synthetic fixtures, resolution labels and reopening, clustering, duplicate privacy, authorization, rate limits, bad images, and missing-provider fallbacks. Mocked pretrained outputs in API tests check the HTTP integration; `smoke_models.py` separately tests real downloaded MiniLM and CLIP weights. Test fixtures never write to your live Supabase database and are never presented as real training data.
