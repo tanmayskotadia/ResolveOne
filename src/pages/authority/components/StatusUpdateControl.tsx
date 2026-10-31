@@ -62,37 +62,11 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
         resolutionPhotoUrl = publicUrl
       }
 
-      // 1. Update complaint status if changed or photo added
-      if (newStatus !== complaint.status || resolutionPhotoUrl !== complaint.resolution_photo_url) {
-        const updatePayload: Partial<ComplaintRow> = {
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        }
-        if (resolutionPhotoUrl !== complaint.resolution_photo_url) {
-          updatePayload.resolution_photo_url = resolutionPhotoUrl
-        }
-
-        const { error: updateError } = await supabase
-          .from('complaints')
-          .update(updatePayload)
-          .eq('id', complaint.id)
-
-        if (updateError) throw new Error('Failed to update complaint status: ' + updateError.message)
-      }
-
-      // 2. Insert history row (always insert if we clicked update, even if status is same but note is new)
-      if (newStatus !== complaint.status || note.trim() || photoFile) {
-        const { error: historyError } = await supabase
-          .from('status_history')
-          .insert({
-            complaint_id: complaint.id,
-            status: newStatus,
-            note: note.trim() || null,
-            changed_by: null // DEMO MODE: No Supabase user context
-          })
-
-        if (historyError) throw new Error('Failed to add history entry: ' + historyError.message)
-      }
+      const { error: updateError } = await supabase.rpc('update_complaint_status', {
+        p_id: complaint.id, p_status: newStatus, p_note: note.trim() || null,
+        p_resolution_photo_url: resolutionPhotoUrl || null,
+      })
+      if (updateError) throw new Error('Could not save the status and history. ' + updateError.message)
 
       setNote('')
       setPhotoFile(null)

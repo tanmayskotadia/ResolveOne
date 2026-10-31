@@ -3,6 +3,8 @@ import { Card, Button } from '../../../components/ui'
 import { Spinner } from '../../../components/ui/Spinner'
 import type { ComplaintData } from '../../../types/complaint'
 import { useTheme } from '../../../context/ThemeContext'
+import { IssueAssistant } from '../../../components/IssueAssistant'
+import { intelligence } from '../../../lib/intelligence'
 
 interface Step1Props {
   data: ComplaintData
@@ -56,7 +58,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
       }
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
+        const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType })
         stream.getTracks().forEach(track => track.stop())
         await transcribeAudio(audioBlob)
       }
@@ -85,28 +87,10 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
     onChange({ source: 'voice' })
     try {
       const formData = new FormData()
-      formData.append('file', blob, 'audio.wav')
-      formData.append('model', 'saaras:v3')
-      formData.append('mode', 'translate') // Ensures output is in English
-      
-      const langCode = LANGUAGES.find(l => l.name === data.language)?.code || 'unknown'
-      formData.append('language_code', langCode)
-
-      const response = await fetch('https://api.sarvam.ai/speech-to-text', {
-        method: 'POST',
-        headers: {
-          'api-subscription-key': import.meta.env.VITE_SARVAM_API_KEY as string,
-        },
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`)
-      }
-
-      const result = await response.json()
+      formData.append('file', blob, blob.type.includes('mp4') ? 'audio.mp4' : 'audio.webm')
+      const result = await intelligence<{ text: string }>('/transcribe', { form: formData })
       // result.transcript contains the English translated text
-      const transcript = result.transcript || result.text || ''
+      const transcript = result.text || ''
       if (transcript) {
         onChange({ description: transcript })
       } else {
@@ -228,6 +212,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
             </label>
             <textarea
               id="description"
+              maxLength={4000}
               rows={4}
               className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-950 border-navy-800 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
               placeholder="Describe the issue in detail..."
@@ -266,6 +251,8 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
           </div>
         </div>
       </Card>
+
+      <IssueAssistant description={data.description} category={data.category} onApply={category => onChange({ category })} />
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={isNextDisabled}>

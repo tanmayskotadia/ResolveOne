@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, Button, Badge } from '../../../components/ui'
 import type { ComplaintData } from '../../../types/complaint'
@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabaseClient'
 import { useCitizen } from '../../../context/CitizenContext'
 import { useTheme } from '../../../context/ThemeContext'
 import toast from 'react-hot-toast'
+import { ReportIntelligence } from '../../../components/ReportIntelligence'
 
 interface Step4Props {
   data: ComplaintData
@@ -20,7 +21,12 @@ export function Step4Review({ data, onBack }: Step4Props) {
   const [error, setError] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
 
-  const previewUrl = data.photoFile ? URL.createObjectURL(data.photoFile) : null
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  useEffect(() => {
+    const url = data.photoFile ? URL.createObjectURL(data.photoFile) : null
+    setPreviewUrl(url)
+    return () => { if (url) URL.revokeObjectURL(url) }
+  }, [data.photoFile])
 
   const handleSubmit = async () => {
     if (!citizenHash) {
@@ -176,6 +182,8 @@ export function Step4Review({ data, onBack }: Step4Props) {
           </div>
         )}
       </Card>
+
+      <ReportIntelligence data={data} />
 
       <div className="flex justify-between">
         <Button variant="secondary" onClick={onBack} disabled={isSubmitting}>Back</Button>

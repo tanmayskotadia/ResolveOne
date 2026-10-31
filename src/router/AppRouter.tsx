@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '../context/AuthContext'
 import { CitizenProvider } from '../context/CitizenContext'
@@ -7,12 +8,14 @@ import { ErrorBoundary } from '../components/ErrorBoundary'
 import { LandingPage } from '../pages/LandingPage'
 import { AuthorityLoginPage } from '../pages/authority/AuthorityLoginPage'
 import { AadhaarVerifyPage } from '../pages/citizen/AadhaarVerifyPage'
-import { ReportIssuePage } from '../pages/citizen/ReportIssuePage'
-import { TrackComplaintPage } from '../pages/citizen/TrackComplaintPage'
-import { AuthorityPage } from '../pages/AuthorityPage'
+import { PageLoader } from '../components/ui/Spinner'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { AuthorityProtectedRoute } from './AuthorityProtectedRoute'
 import { Navbar } from '../layouts/Navbar'
+
+const ReportIssuePage = lazy(() => import('../pages/citizen/ReportIssuePage').then(module => ({ default: module.ReportIssuePage })))
+const TrackComplaintPage = lazy(() => import('../pages/citizen/TrackComplaintPage').then(module => ({ default: module.TrackComplaintPage })))
+const AuthorityPage = lazy(() => import('../pages/AuthorityPage').then(module => ({ default: module.AuthorityPage })))
 
 export function AppRouter() {
   return (
@@ -24,7 +27,7 @@ export function AppRouter() {
               <div className="flex flex-col min-h-screen">
                 <Navbar />
                 <main className="flex-1">
-                  <Routes>
+                  <Suspense fallback={<PageLoader />}><Routes>
                     {/* Public Home */}
                     <Route path="/" element={<LandingPage />} />
 
@@ -43,7 +46,7 @@ export function AppRouter() {
 
                     {/* Catch-all */}
                     <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
+                  </Routes></Suspense>
                 </main>
               </div>
               <Toaster

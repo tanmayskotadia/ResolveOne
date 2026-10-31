@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCitizen } from '../context/CitizenContext'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 export function Navbar() {
   const navigate = useNavigate()
@@ -11,7 +12,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const isAuthority = localStorage.getItem('authority_logged_in') === 'true'
+  const { profile, signOut } = useAuth()
+  const isAuthority = profile?.role === 'authority'
   const isAuthoritySection = location.pathname.startsWith('/authority') && location.pathname !== '/authority/login'
   const isCitizenSection = location.pathname.startsWith('/citizen')
   const isLanding = location.pathname === '/'
@@ -25,7 +27,7 @@ export function Navbar() {
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
   async function handleAuthorityLogout() {
-    localStorage.removeItem('authority_logged_in')
+    await signOut()
     navigate('/', { replace: true })
   }
 

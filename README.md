@@ -2,6 +2,8 @@
 
 # ResolveOne
 
+**Intelligence upgrade:** five ML features are integrated into reporting and the authority dashboard. See [the ML service setup guide](ml_service/README.md) for server configuration, the required database migration, model downloads, and verification. Authority access now uses real Supabase accounts; the old demo login is removed. Sarvam credentials belong on the server, not in `VITE_` variables.
+
 **A civic issue reporting and resolution platform that connects citizens with municipal authorities.**
 
 </div>
@@ -163,14 +165,16 @@ Create a `.env` file in the project root:
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_SARVAM_API_KEY=your_sarvam_api_key
+VITE_ML_API_URL=/api/ml
 ```
 
 | Variable | Required | Description |
 |---|---|---|
 | `VITE_SUPABASE_URL` | Yes | Your Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anonymous/public API key |
-| `VITE_SARVAM_API_KEY` | Yes | Sarvam AI API key for speech-to-text |
+| `VITE_ML_API_URL` | No in development | ML API URL; defaults to the Vite `/api/ml` proxy. Configure the API origin or a reverse proxy for production. |
+
+Set `SARVAM_API_KEY` only in `ml_service/.env` for voice input. See the ML service guide for server credentials and startup commands.
 
 > **Note:** The `.env` file is listed in `.gitignore` and should never be committed to version control.
 

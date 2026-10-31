@@ -74,38 +74,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // On mount — get the current session and subscribe to auth changes
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        const p = await fetchProfile(session.user.id)
-        setProfile(p)
-      }
-
-      setLoading(false)
-    })
-
-    // Subscribe to auth state changes (login, logout, token refresh)
+    let active = true
+    let generation = 0
+    // The initial session is emitted by the subscription. Fetch outside the
+    // auth callback so a database request cannot wait on the auth client's lock.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const current = ++generation
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        const p = await fetchProfile(session.user.id)
-        setProfile(p)
+        setLoading(true)
+        setTimeout(() => {
+          if (!active || current !== generation) return
+          fetchProfile(session.user.id).then(p => {
+            if (active && current === generation) setProfile(p)
+          }).catch(() => {
+            if (active && current === generation) setProfile(null)
+          }).finally(() => {
+            if (active && current === generation) setLoading(false)
+          })
+        }, 0)
       } else {
         setProfile(null)
+        setLoading(false)
       }
-
-      // After initial mount, subsequent changes never block the UI
-      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => { active = false; subscription.unsubscribe() }
   }, [fetchProfile])
 
   const signOut = useCallback(async () => {

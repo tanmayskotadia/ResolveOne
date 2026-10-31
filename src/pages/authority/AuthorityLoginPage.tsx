@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui'
 import { useTheme } from '../../context/ThemeContext'
 import toast from 'react-hot-toast'
+import { supabase } from '../../lib/supabaseClient'
 
 export function AuthorityLoginPage() {
   const navigate = useNavigate()
@@ -18,20 +19,23 @@ export function AuthorityLoginPage() {
     setError(null)
     setLoading(true)
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    if (email === 'officer@municipality.gov.in' && password === 'admin123') {
-      localStorage.setItem('authority_logged_in', 'true')
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) throw new Error('Invalid email or password. Please try again.')
+      const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
+      if (profileError || profile?.role !== 'authority') {
+        await supabase.auth.signOut()
+        throw new Error('This account does not have authority access. Contact your administrator.')
+      }
       toast.success('Welcome, Officer!')
       navigate('/authority', { replace: true })
-    } else {
-      const msg = 'Invalid authority credentials'
+    } catch (reason) {
+      const msg = reason instanceof Error ? reason.message : 'Could not sign in. Please retry.'
       setError(msg)
       toast.error(msg)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (

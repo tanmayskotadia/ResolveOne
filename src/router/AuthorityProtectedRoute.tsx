@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { PageLoader } from '../components/ui/Spinner'
 
 /**
@@ -7,17 +7,10 @@ import { PageLoader } from '../components/ui/Spinner'
  * Redirects unauthenticated users to /authority/login.
  */
 export function AuthorityProtectedRoute() {
-  const [loading, setLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  useEffect(() => {
-    const isLogged = localStorage.getItem('authority_logged_in') === 'true'
-    setIsAuthenticated(isLogged)
-    setLoading(false)
-  }, [])
+  const { loading, user, profile } = useAuth()
 
   if (loading) return <PageLoader />
-  if (!isAuthenticated) return <Navigate to="/authority/login" replace />
+  if (!user || profile?.role !== 'authority') return <Navigate to="/authority/login" replace />
 
   return <Outlet />
 }

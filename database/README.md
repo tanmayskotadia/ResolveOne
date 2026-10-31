@@ -1,5 +1,7 @@
 # ResolveOne — Database Setup Guide
 
+For the current intelligence features, apply `intelligence_upgrade.sql` **after** the existing schema and resolution-photo scripts. It replaces anonymous demo authority access with authenticated officers and adds atomic status/history updates. See `../ml_service/README.md` for complete setup. Run the upgrade last; the older baseline recreates demo policies if rerun afterward.
+
 ## Which file to run
 
 **Run only this file:**

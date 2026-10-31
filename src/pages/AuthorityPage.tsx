@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Badge, Button, Card, Skeleton } from '../components/ui'
 import { supabase } from '../lib/supabaseClient'
 import type { ComplaintRow } from '../types/complaint'
@@ -8,7 +8,21 @@ import { AuthorityComplaintsMap } from './authority/components/AuthorityComplain
 import { AuthorityComplaintDetail } from './authority/components/AuthorityComplaintDetail'
 import { useTheme } from '../context/ThemeContext'
 
-type ViewMode = 'list' | 'map' | 'map'
+const AuthorityInsights = lazy(() => import('../components/AuthorityInsights').then(module => ({ default: module.AuthorityInsights })))
+type ViewMode = 'list' | 'map' | 'insights'
+
+function exportComplaints(complaints: ComplaintRow[]) {
+  const fields = ['complaint_code', 'category', 'status', 'description', 'address', 'created_at'] as const
+  const escape = (value: unknown) => {
+    let text = String(value ?? '')
+    if (/^[\s]*[=+@-]/.test(text)) text = `'${text}`
+    return `"${text.replaceAll('"', '""')}"`
+  }
+  const csv = [fields.join(','), ...complaints.map(row => fields.map(field => escape(row[field])).join(','))].join('\r\n')
+  const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }))
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = `resolveone-${new Date().toISOString().slice(0, 10)}.csv`; anchor.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 export function AuthorityPage() {
   const [complaints, setComplaints] = useState<ComplaintRow[]>([])
@@ -24,19 +38,18 @@ export function AuthorityPage() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await supabase
-      .from('complaints')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (err) {
-      console.error('[AuthorityPage] fetch error:', err.message)
+    try {
+      const rows: ComplaintRow[] = []
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error: err } = await supabase.from('complaints').select('*').order('created_at', { ascending: false }).order('id').range(offset, offset + 999)
+        if (err) throw err
+        rows.push(...data as ComplaintRow[])
+        if (data.length < 1000) break
+      }
+      setComplaints(rows)
+    } catch {
       setError('Failed to load complaints. Please try again.')
-    } else {
-      setComplaints(data as ComplaintRow[])
-    }
-    
-    setLoading(false)
+    } finally { setLoading(false) }
   }
 
   useEffect(() => {
@@ -89,7 +102,7 @@ export function AuthorityPage() {
               <Button variant="secondary" size="sm" onClick={fetchComplaints} loading={loading}>
                 Refresh Data
               </Button>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" disabled={loading || !!error || !complaints.length} onClick={() => exportComplaints(complaints)}>
                 Export Report
               </Button>
             </div>
@@ -140,6 +153,7 @@ export function AuthorityPage() {
             <Card noPadding className={`p-2 inline-flex shadow-sm border ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-200'}`}>
               <button
                 onClick={() => setViewMode('list')}
+                aria-pressed={viewMode === 'list'}
                 className={['px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2', viewMode === 'list' ? (isDark ? 'bg-navy-800 text-white' : 'bg-slate-100 text-slate-800') : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')].join(' ')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -149,6 +163,7 @@ export function AuthorityPage() {
               </button>
               <button
                 onClick={() => setViewMode('map')}
+                aria-pressed={viewMode === 'map'}
                 className={['px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2', viewMode === 'map' ? (isDark ? 'bg-navy-800 text-white' : 'bg-slate-100 text-slate-800') : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')].join(' ')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -156,11 +171,14 @@ export function AuthorityPage() {
                 </svg>
                 Map View
               </button>
+              <button type="button" aria-pressed={viewMode === 'insights'} onClick={() => setViewMode('insights')} className={`px-4 py-1.5 text-sm font-medium rounded-lg ${viewMode === 'insights' ? 'bg-primary text-white' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>✦ Insights</button>
             </Card>
 
             {/* View Content */}
             {viewMode === 'list' ? (
               <AuthorityComplaintsList complaints={complaints} onSelect={setSelectedComplaint} />
+            ) : viewMode === 'insights' ? (
+              <Suspense fallback={<div className="assist-panel" role="status">Loading insights…</div>}><AuthorityInsights complaints={complaints} onSelect={setSelectedComplaint} /></Suspense>
             ) : (
               <AuthorityComplaintsMap complaints={complaints} onSelect={setSelectedComplaint} />
             )}

@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { Card, Button } from '../../../components/ui'
 import type { ComplaintData } from '../../../types/complaint'
 import { useTheme } from '../../../context/ThemeContext'
+import { IssueAssistant } from '../../../components/IssueAssistant'
+import { CATEGORIES } from '../../../lib/intelligence'
 
 interface Step3Props {
   data: ComplaintData
@@ -15,6 +17,7 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
   const isDark = theme === 'dark'
   const [preview, setPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [fileError, setFileError] = useState('')
 
   // Generate local preview URL
   useEffect(() => {
@@ -31,10 +34,12 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
     const file = e.target.files?.[0]
     if (file) {
       // Validate type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file.')
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+        setFileError('Choose a JPEG, PNG or WebP photo smaller than 5 MB.')
+        e.target.value = ''
         return
       }
+      setFileError('')
       onChange({ photoFile: file })
     }
   }
@@ -97,7 +102,7 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
             
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               className="hidden"
               ref={fileInputRef}
               onChange={handleFileChange}
@@ -105,6 +110,16 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
           </div>
         </div>
       </Card>
+
+      {fileError && <p role="alert" className="text-sm text-danger">{fileError}</p>}
+      {data.photoFile && <>
+        <IssueAssistant photo={data.photoFile} category={data.category} onApply={category => onChange({ category })} />
+        <label className="block text-sm font-medium">Final category
+          <select className="assist-select mt-2" value={data.category} onChange={event => onChange({ category: event.target.value })}>
+            {CATEGORIES.map(category => <option key={category}>{category}</option>)}
+          </select>
+        </label>
+      </>}
 
       <div className="flex justify-between">
         <Button variant="secondary" onClick={onBack}>

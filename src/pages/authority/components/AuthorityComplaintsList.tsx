@@ -9,7 +9,7 @@ interface AuthorityComplaintsListProps {
   onSelect: (complaint: ComplaintRow) => void
 }
 
-const STATUS_FILTERS = ['All', 'Submitted', 'In Progress', 'Resolved', 'Rejected']
+const STATUS_FILTERS = ['All', 'Submitted', 'Under Review', 'In Progress', 'Resolved', 'Rejected']
 const CATEGORY_FILTERS = ['All', 'Garbage/Waste', 'Road Damage/Potholes', 'Streetlights', 'Water Leakage/Supply', 'Drainage/Sewage', 'Electricity', 'Public Infrastructure', 'Other']
 
 const statusBadgeMap: Record<string, any> = {
@@ -31,12 +31,14 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
     return complaints.filter((c) => {
       // Search by ID or Description
       const searchMatch = search === '' || 
+        c.complaint_code?.toLowerCase().includes(search.toLowerCase()) ||
         shortCode(c.id).toLowerCase().includes(search.toLowerCase()) ||
         c.description.toLowerCase().includes(search.toLowerCase())
 
       // Status Filter
       const statusMap: Record<string, string> = {
         'Submitted': 'submitted',
+        'Under Review': 'under-review',
         'In Progress': 'in-progress',
         'Resolved': 'resolved',
         'Rejected': 'rejected'
@@ -56,13 +58,14 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
         <div className="w-full sm:w-64">
           <Input 
             id="search" 
-            placeholder="Search CMP-ID or text..." 
+            placeholder="Search complaint code or description…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <select 
+            aria-label="Filter by status"
             className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -70,6 +73,7 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
             {STATUS_FILTERS.map(f => <option key={f} value={f}>{f} Status</option>)}
           </select>
           <select 
+            aria-label="Filter by category"
             className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
@@ -88,13 +92,17 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
           filteredComplaints.map(c => (
             <div 
               key={c.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Open ${c.complaint_code || shortCode(c.id)}: ${c.category}`}
+              onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(c) } }}
               onClick={() => onSelect(c)}
               className={`flex items-start gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer group hover:border-primary-200 hover:shadow-card-hover ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-100'}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border ${isDark ? 'bg-navy-950 text-slate-400 border-navy-800' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
-                    {shortCode(c.id)}
+                    {c.complaint_code || shortCode(c.id)}
                   </span>
                   <Badge variant={statusBadgeMap[c.status] || 'default'} size="sm" />
                   <span className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{c.category}</span>

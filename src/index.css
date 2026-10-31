@@ -1,6 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* Shared intelligence surfaces: readable in both themes and on small screens. */
+.assist-panel { padding: 1.25rem; border: 1px solid #d9e4f1; border-radius: 1rem; background: linear-gradient(135deg, #fff, #f5f9ff); color: #172c48; box-shadow: 0 3px 16px #163f7805; }
+.assist-inner { padding: 1rem; border-radius: .75rem; border: 1px solid #dde6f0; background: #fff; }
+.assist-muted { color: #52647c; line-height: 1.6; }
+.assist-spark { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; flex-shrink: 0; border-radius: .65rem; background: #e1edff; color: #1a4e93; }
+.assist-tag { display: inline-block; border-radius: 2rem; padding: .25rem .65rem; background: #e7eef9; color: #234c80; font-size: .65rem; font-weight: 600; white-space: nowrap; }
+.assist-choice { cursor: pointer; display: inline-block; border: 1px solid #b9cce5; border-radius: .65rem; padding: .6rem .8rem; background: #fff; color: #234c80; font-size: .8rem; font-weight: 600; transition: background .15s, border-color .15s; }
+.assist-choice:hover { background: #eaf2ff; border-color: #4d8dce; }
+.assist-choice.selected { background: #1e5aa8; border-color: #1e5aa8; color: #fff; }
+.assist-choice:disabled { opacity: .5; cursor: wait; }
+.assist-link { color: #1a4e93; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.assist-select { display: block; width: 100%; min-height: 2.6rem; border: 1px solid #bdcde0; border-radius: .65rem; padding: .5rem .75rem; background: white; color: #172c48; font-size: .85rem; }
+.insight-hero { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; padding: 1.75rem; border-radius: 1.1rem; background: linear-gradient(115deg, #133459, #174f73); color: #fff; }
+html.dark .assist-panel { border-color: #1b3559; background: linear-gradient(135deg, #0d1d34, #0d213a); color: #e2ecfa; }
+html.dark .assist-inner { border-color: #203958; background: #0a172b; }
+html.dark .assist-muted { color: #a0b2cb; }
+html.dark .assist-spark, html.dark .assist-tag { background: #193759; color: #b7d6ff; }
+html.dark .assist-choice { background: #112945; color: #c4ddfc; border-color: #365578; }
+html.dark .assist-choice:hover { background: #1a3b60; }
+html.dark .assist-choice.selected { background: #235eaa; color: white; }
+html.dark .assist-link { color: #93c5fd; }
+html.dark .assist-select { background: #0a172b; border-color: #365578; color: #e2ecfa; }
+@media (prefers-reduced-motion: reduce) { .animate-pulse, .animate-fade-in { animation: none !important; } }
+
 /* ============================================================
    DESIGN TOKENS — CivicConnect
    Primary: #1E5AA8 (trustworthy government blue)
