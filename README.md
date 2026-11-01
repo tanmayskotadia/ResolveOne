@@ -67,6 +67,8 @@ ResolveOne connects citizens and municipal authorities through a centralized pla
 ### Architecture Diagram
 
 ```mermaid
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': 'transparent', 'primaryTextColor': '#F1F5F9', 'lineColor': '#9CA3AF', 'fontFamily': 'Arial'}}}%%
 flowchart TD
     A[Citizen]
     C[Municipal Authority]
@@ -101,13 +103,13 @@ flowchart TD
     L --> N
     E --> O
 
-    classDef userRole stroke:#818cf8,fill:#eef2ff
-    classDef frontend stroke:#38bdf8,fill:#f0f9ff
-    classDef feature stroke:#a78bfa,fill:#f5f3ff
-    classDef backend stroke:#2dd4bf,fill:#f0fdfa
-    classDef database stroke:#4ade80,fill:#f0fdf4
-    classDef ml stroke:#fb923c,fill:#fff7ed
-    classDef external stroke:#f87171,fill:#fef2f2
+    classDef userRole fill:#312e81,stroke:#818cf8,color:#ffffff,stroke-width:2px
+    classDef frontend fill:#0c4a6e,stroke:#38bdf8,color:#ffffff,stroke-width:2px
+    classDef feature fill:#4c1d95,stroke:#a78bfa,color:#ffffff,stroke-width:2px
+    classDef backend fill:#134e4a,stroke:#2dd4bf,color:#ffffff,stroke-width:2px
+    classDef database fill:#14532d,stroke:#4ade80,color:#ffffff,stroke-width:2px
+    classDef ml fill:#7c2d12,stroke:#fb923c,color:#ffffff,stroke-width:2px
+    classDef external fill:#7f1d1d,stroke:#f87171,color:#ffffff,stroke-width:2px
 
     class A,C userRole
     class B,D frontend
@@ -116,6 +118,9 @@ flowchart TD
     class I,J,K database
     class L,M,N ml
     class O external
+
+    linkStyle default stroke:#9CA3AF,stroke-width:2px
+```
 ```
 
 ## How It Works
