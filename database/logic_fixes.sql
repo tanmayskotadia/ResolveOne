@@ -98,5 +98,6 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   LIMIT greatest(1, least(p_limit, 501));
 $$;
 REVOKE ALL ON FUNCTION public.nearby_complaints(double precision, double precision, timestamptz, integer) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.nearby_complaints(double precision, double precision, timestamptz, integer) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.nearby_complaints(double precision, double precision, timestamptz, integer) TO service_role;
 NOTIFY pgrst, 'reload schema';

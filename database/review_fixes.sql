@@ -37,6 +37,7 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION public.update_complaint_status(uuid, text, text, text, text, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.update_complaint_status(uuid, text, text, text, text, timestamptz) FROM anon;
 GRANT EXECUTE ON FUNCTION public.update_complaint_status(uuid, text, text, text, text, timestamptz) TO authenticated;
 
 -- All officer writes must use the RPC so proof, concurrency and history checks
