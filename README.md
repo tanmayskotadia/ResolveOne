@@ -60,40 +60,205 @@ Civic infrastructure problems like potholes, broken streetlights, water leaks, g
 ---
 
 ## How It Works
+## System Architecture
 
-### Citizen Workflow
+ResolveOne connects citizens and municipal authorities through a centralized platform for reporting, managing, and tracking civic issues. It combines a React-based frontend, Supabase backend services, and ML-powered features to simplify complaint management.
 
-```
-Verify Identity (Aadhaar)
-    ↓
-Describe Issue (text or voice) + Select Category
-    ↓
-Select Location on Map
-    ↓
-Attach Photo (optional)
-    ↓
-Review & Submit
-    ↓
-Receive Complaint Code (e.g. CC-2026-00001)
-    ↓
-Track Complaint → View Status Timeline → See Resolution
+### Architecture Diagram
+
+```mermaid
+flowchart TD
+    A[Citizen]
+    C[Municipal Authority]
+    B[ResolveOne Web Application]
+    D[React + Vite Frontend]
+    E[Complaint Reporting]
+    F[Authority Dashboard]
+    G[Complaint Tracking]
+    H[Supabase Backend]
+    I[(Supabase Database)]
+    J[Supabase Storage]
+    K[Supabase Authentication]
+    L[ML Services]
+    M[Voice Transcription]
+    N[Duplicate Detection]
+    O[OpenStreetMap]
+
+    A --> B
+    C --> B
+    B --> D
+    D --> E
+    D --> F
+    D --> G
+    E --> H
+    F --> H
+    G --> H
+    H --> I
+    H --> J
+    H --> K
+    E --> L
+    L --> M
+    L --> N
+    E --> O
+
+    classDef userRole stroke:#818cf8,fill:#eef2ff
+    classDef frontend stroke:#38bdf8,fill:#f0f9ff
+    classDef feature stroke:#a78bfa,fill:#f5f3ff
+    classDef backend stroke:#2dd4bf,fill:#f0fdfa
+    classDef database stroke:#4ade80,fill:#f0fdf4
+    classDef ml stroke:#fb923c,fill:#fff7ed
+    classDef external stroke:#f87171,fill:#fef2f2
+
+    class A,C userRole
+    class B,D frontend
+    class E,F,G feature
+    class H backend
+    class I,J,K database
+    class L,M,N ml
+    class O external
 ```
 
-### Authority Workflow
+## How It Works
 
+ResolveOne provides separate workflows for citizens reporting civic issues and municipal authorities managing complaints.
+
+### 1. Citizen Complaint Workflow
+
+Citizens can submit civic complaints by providing issue details, selecting a location, and uploading supporting images. Once submitted, they can track the progress of their complaints.
+
+```mermaid
+flowchart TD
+    A([Start])
+    B[Open ResolveOne]
+    C[User Authentication]
+    D[Report Civic Issue]
+    E[Enter Complaint Details]
+    F[Select Location]
+    G[Upload Supporting Image]
+    H[AI Processing]
+    I[Submit Complaint]
+    J[Generate Complaint ID]
+    K[Track Complaint Status]
+    L[View Resolution Details]
+    M([End])
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+
+    classDef startEnd stroke:#4ade80,fill:#f0fdf4
+    classDef action stroke:#38bdf8,fill:#f0f9ff
+    classDef processing stroke:#fb923c,fill:#fff7ed
+    classDef tracking stroke:#a78bfa,fill:#f5f3ff
+
+    class A,M startEnd
+    class B,C,D,E,F,G,I action
+    class H,J processing
+    class K,L tracking
 ```
-Log in (email + password)
-    ↓
-View Dashboard (stats + complaint list/map)
-    ↓
-Open Complaint Details
-    ↓
-Update Status + Add Note
-    ↓
-Upload Resolution Proof Photo (required for "Resolved")
-    ↓
-Citizen sees updated status and proof on tracking page
+
+### 2. Municipal Authority Workflow
+
+Municipal authorities can review submitted complaints, update their status, add resolution details, and provide supporting proof of resolution.
+
+```mermaid
+flowchart TD
+    A([Start])
+    B[Authority Login]
+    C[Authority Dashboard]
+    D[View Submitted Complaints]
+    E[Review Complaint Details]
+    F{Complaint Valid?}
+    G[Reject Complaint]
+    H[Process Complaint]
+    I[Update Complaint Status]
+    J[Add Resolution Notes]
+    K[Upload Resolution Proof]
+    L[Mark as Resolved]
+    M[Citizen Views Updated Status]
+    N([End])
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F -->|No| G
+    G --> M
+    F -->|Yes| H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+
+    classDef startEnd stroke:#4ade80,fill:#f0fdf4
+    classDef authority stroke:#38bdf8,fill:#f0f9ff
+    classDef decision stroke:#fb923c,fill:#fff7ed
+    classDef rejected stroke:#f87171,fill:#fef2f2
+    classDef resolved stroke:#2dd4bf,fill:#f0fdfa
+
+    class A,N startEnd
+    class B,C,D,E,H,I,J,K authority
+    class F decision
+    class G rejected
+    class L,M resolved
 ```
+
+## Complaint Lifecycle
+
+Every complaint moves through a series of stages, allowing citizens to monitor its progress and authorities to maintain transparency.
+
+```mermaid
+flowchart LR
+    A[Submitted] --> B[Under Review]
+    B --> C[In Progress]
+    C --> D[Resolved]
+
+    B --> E[Rejected]
+
+    classDef submitted stroke:#38bdf8,fill:#f0f9ff
+    classDef review stroke:#fb923c,fill:#fff7ed
+    classDef progress stroke:#a78bfa,fill:#f5f3ff
+    classDef resolved stroke:#4ade80,fill:#f0fdf4
+    classDef rejected stroke:#f87171,fill:#fef2f2
+
+    class A submitted
+    class B review
+    class C progress
+    class D resolved
+    class E rejected
+```
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Frontend | React, Vite |
+| Backend | Supabase |
+| Database | Supabase PostgreSQL |
+| Authentication | Supabase Auth |
+| File Storage | Supabase Storage |
+| Machine Learning | ML Services |
+| Mapping | OpenStreetMap |
+
+## Key Objectives
+
+- Simplify civic issue reporting and complaint submission.
+- Improve communication between citizens and municipal authorities.
+- Enable transparent complaint tracking.
+- Leverage AI-assisted features to improve complaint processing.
+- Promote accountability through status updates and resolution records.
 
 ---
 
