@@ -1,6 +1,8 @@
 import { act,cleanup,fireEvent,render,screen,waitFor } from '@testing-library/react'
 import { afterEach,beforeEach,expect,test,vi } from 'vitest'
 import { PhotoCategorySuggestion } from '../src/components/PhotoCategorySuggestion'
+import { Step3Photo } from '../src/pages/citizen/components/Step3Photo'
+import type { ComplaintData } from '../src/types/complaint'
 const mocks=vi.hoisted(()=>({invoke:vi.fn(),prepare:vi.fn(),suggest:vi.fn()}))
 vi.mock('../src/context/ThemeContext',()=>({useTheme:()=>({theme:'light'})}))
 vi.mock('../src/lib/supabaseClient',()=>({supabase:{functions:{invoke:mocks.invoke}}}))
@@ -22,7 +24,7 @@ test('explicit consent and action are required; category applies only on confirm
  fireEvent.click(screen.getByRole('checkbox'));fireEvent.click(button)
  await screen.findByText('Suggested category: Road Damage/Potholes')
  expect(apply).not.toHaveBeenCalled()
- fireEvent.click(screen.getByRole('button',{name:'Apply suggestion'}));expect(apply).toHaveBeenCalledExactlyOnceWith(good.category)
+ fireEvent.click(screen.getByRole('button',{name:'Apply suggestion'}));expect(apply).toHaveBeenCalledExactlyOnceWith(good.category,good.evidence)
 })
 test('uncertain images leave manual selection and expose no apply button',async()=>{
  mocks.suggest.mockResolvedValue({...good,uncertain:true,category:null})
@@ -48,4 +50,14 @@ test('quota or network failure preserves manual workflow',async()=>{
  await screen.findByRole('button',{name:'Suggest category'});fireEvent.click(screen.getByRole('checkbox'));fireEvent.click(screen.getByRole('button',{name:'Suggest category'}))
  await screen.findByText(/Photo suggestions could not finish/)
  expect((screen.getByRole('button',{name:'Suggest category'}) as HTMLButtonElement).disabled).toBe(false)
+})
+test('Step3Photo applies suggestion updates to both category and description',async()=>{
+ const data:ComplaintData={language:'English',description:'road damage',category:'Other',source:'text',lat:0,lng:0,address:'',photoFile:photo,photoUrl:null}
+ const onChange=vi.fn()
+ render(<Step3Photo data={data} onChange={onChange} onNext={()=>{}} onBack={()=>{}}/>)
+ const button=await screen.findByRole('button',{name:'Suggest category'})
+ fireEvent.click(screen.getByRole('checkbox'));fireEvent.click(button)
+ await screen.findByText(`Suggested category: ${good.category}`)
+ fireEvent.click(screen.getByRole('button',{name:'Apply suggestion'}))
+ expect(onChange).toHaveBeenCalledWith({category:good.category,description:good.evidence})
 })

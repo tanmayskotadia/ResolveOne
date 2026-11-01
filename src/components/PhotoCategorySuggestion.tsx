@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { preparePhoto,suggestPhotoCategory,type PhotoCategoryResult } from '../lib/photoCategory'
 import { useTheme } from '../context/ThemeContext'
 
-export function PhotoCategorySuggestion({photo,onApply}:{photo:File;onApply:(category:string)=>void}){
+export function PhotoCategorySuggestion({photo,onApply}:{photo:File;onApply:(category:string,description?:string)=>void}){
  const {theme}=useTheme();const dark=theme==='dark'
  const [enabled,setEnabled]=useState(false);const [consent,setConsent]=useState(false);const [busy,setBusy]=useState(false)
  const [result,setResult]=useState<{photo:File;value:PhotoCategoryResult}|null>(null);const [error,setError]=useState('')
@@ -45,7 +45,7 @@ export function PhotoCategorySuggestion({photo,onApply}:{photo:File;onApply:(cat
   {suggestion&&<div className="text-sm space-y-2">
    <p>{suggestion.uncertain?'The category is uncertain. Please select it manually.':`Suggested category: ${suggestion.category}`}</p>
    <p>{suggestion.evidence}</p>
-   {!suggestion.uncertain&&suggestion.category&&<button type="button" className="text-primary underline" onClick={()=>onApply(suggestion.category!)}>Apply suggestion</button>}
+   {!suggestion.uncertain&&suggestion.category&&<button type="button" className="text-primary underline" onClick={()=>onApply(suggestion.category!,suggestion.evidence)}>Apply suggestion</button>}
    <p className="text-xs">Review the photo yourself. This suggestion does not verify the complaint or prove authenticity.</p>
   </div>}
  </section>

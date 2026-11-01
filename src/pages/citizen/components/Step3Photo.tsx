@@ -5,6 +5,7 @@ import { useTheme } from '../../../context/ThemeContext'
 import { CATEGORIES } from '../../../lib/categories'
 import { PhotoCategorySuggestion } from '../../../components/PhotoCategorySuggestion'
 import { photoError } from '../../../lib/complaintLogic'
+import toast from 'react-hot-toast'
 
 interface Step3Props {
   data: ComplaintData
@@ -129,11 +130,32 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
 
       {fileError && <p role="alert" className="text-sm text-danger">{fileError}</p>}
       {data.photoFile && <>
-        <PhotoCategorySuggestion photo={data.photoFile} onApply={category=>onChange({category})} />
-        <label className="block text-sm font-medium">Final category
+        <PhotoCategorySuggestion
+          photo={data.photoFile}
+          onApply={(category, description) => {
+            onChange({
+              category,
+              ...(description ? { description } : {})
+            })
+            toast.success('Applied suggestion to category and description')
+          }}
+        />
+        <label className={`block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Final category
           <select className="assist-select mt-2" value={data.category} onChange={event => onChange({ category: event.target.value })}>
             {CATEGORIES.map(category => <option key={category}>{category}</option>)}
           </select>
+
+        </label>
+        <label className={`block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Description
+          <textarea
+            rows={3}
+            maxLength={4000}
+            className={`w-full rounded-lg border p-3 text-sm mt-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-950 border-navy-800 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
+            value={data.description}
+            onChange={event => onChange({ description: event.target.value })}
+            placeholder="Describe the issue in detail..."
+          />
+
         </label>
       </>}
 
