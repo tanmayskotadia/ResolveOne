@@ -17,13 +17,18 @@ def download():
 @lru_cache(maxsize=1)
 def load():
     tokenizer_path, model_path = download()
-    tokenizer = Tokenizer.from_file(tokenizer_path)
-    tokenizer.enable_truncation(max_length=128)
-    tokenizer.enable_padding(length=None)
     options = ort.SessionOptions()
+    options.enable_cpu_mem_arena = False
+    options.enable_mem_pattern = False
+    options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+    options.add_session_config_entry('session.disable_prepacking','1')
     options.intra_op_num_threads = 1
     options.inter_op_num_threads = 1
     session = ort.InferenceSession(model_path, options, providers=['CPUExecutionProvider'])
+    # Load tokenizer after ONNX graph initialization to avoid overlapping peaks.
+    tokenizer = Tokenizer.from_file(tokenizer_path)
+    tokenizer.enable_truncation(max_length=128)
+    tokenizer.enable_padding(length=None)
     return tokenizer, session
 
 @lru_cache(maxsize=256)
