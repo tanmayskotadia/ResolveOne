@@ -3,6 +3,7 @@ import { Card, Button } from '../../../components/ui'
 import type { ComplaintData } from '../../../types/complaint'
 import { useTheme } from '../../../context/ThemeContext'
 import { CATEGORIES } from '../../../lib/categories'
+import { PhotoCategorySuggestion } from '../../../components/PhotoCategorySuggestion'
 import { photoError } from '../../../lib/complaintLogic'
 
 interface Step3Props {
@@ -128,6 +129,7 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
 
       {fileError && <p role="alert" className="text-sm text-danger">{fileError}</p>}
       {data.photoFile && <>
+        <PhotoCategorySuggestion photo={data.photoFile} onApply={category=>onChange({category})} />
         <label className="block text-sm font-medium">Final category
           <select className="assist-select mt-2" value={data.category} onChange={event => onChange({ category: event.target.value })}>
             {CATEGORIES.map(category => <option key={category}>{category}</option>)}

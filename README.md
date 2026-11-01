@@ -195,3 +195,8 @@ Set `SARVAM_API_KEY` only in `ml_service/.env` for voice input. See the ML servi
 
 ---
 
+
+
+## Optional free-tier photo categories
+
+Photo category suggestions use Gemini 3.5 Flash-Lite through a Supabase Edge Function and require a key from a **billing-disabled free-tier project**. The panel stays hidden until configured. Citizens explicitly consent to sending a resized photo and manually apply suggestions. No paid fallback is configured. See [setup, privacy and free-tier limits](supabase/functions/photo-category/README.md).
