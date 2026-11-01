@@ -32,6 +32,9 @@ await db.exec(reviewMigration)
 const duplicateMigration=await readFile(new URL('../supabase/migrations/20261101073633_duplicate_following.sql',import.meta.url),'utf8')
 await db.exec(duplicateMigration)
 await db.exec(duplicateMigration)
+const citizenMigration=await readFile(new URL('../supabase/migrations/20261101080013_same_citizen_duplicates.sql',import.meta.url),'utf8')
+await db.exec(citizenMigration)
+await db.exec(citizenMigration)
 after(() => db.close())
 
 const hash = 'a'.repeat(64)
@@ -197,10 +200,10 @@ test('officers cannot bypass atomic updates through direct table writes', async 
 test('duplicate candidates filter before limit and remain private',async()=>{
  const id=crypto.randomUUID()
  await submit(id,{...report,lat:10,lng:10})
- const found=await db.query('SELECT * FROM duplicate_candidates(10,10)')
+ const found=await db.query('SELECT * FROM duplicate_candidates(10,10,$1)',[hash])
  assert.ok(found.rows.some(row=>row.id===id))
  await db.exec('SET ROLE anon')
- try { await assert.rejects(db.query('SELECT * FROM duplicate_candidates(10,10)'),/permission denied/) }
+ try { await assert.rejects(db.query('SELECT * FROM duplicate_candidates(10,10,$1)',[hash]),/permission denied/) }
  finally { await db.exec('RESET ROLE') }
 })
 
@@ -235,4 +238,18 @@ test('follow capability cannot be reassigned and quota bounds model requests',as
  await assert.rejects(db.query('SELECT follow_duplicate($1,$2)',[second,token]),/unavailable/)
  for(let i=0;i<20;i++) assert.equal((await db.query('SELECT duplicate_quota($1) AS ok',['f'.repeat(64)])).rows[0].ok,true)
  assert.equal((await db.query('SELECT duplicate_quota($1) AS ok',['f'.repeat(64)])).rows[0].ok,false)
+})
+
+
+test('duplicate comparison excludes other Aadhaar hashes before the candidate limit',async()=>{
+ const id=crypto.randomUUID()
+ await submit(id,{...report,lat:11,lng:11})
+ for(let i=0;i<102;i++) await submit(crypto.randomUUID(),{...report,lat:11,lng:11},'b'.repeat(64))
+ const mine=await db.query('SELECT * FROM duplicate_candidates(11,11,$1)',[hash])
+ assert.deepEqual(mine.rows.map(row=>row.id),[id])
+ const other=await db.query('SELECT * FROM duplicate_candidates(11,11,$1)',['b'.repeat(64)])
+ assert.equal(other.rows.length,101)
+ assert.ok(!other.rows.some(row=>row.id===id))
+ assert.equal((await db.query('SELECT * FROM duplicate_candidates(11,11,$1)',['invalid'])).rows.length,0)
+ assert.equal((await db.query('SELECT * FROM duplicate_candidates(11,11,NULL)')).rows.length,0)
 })

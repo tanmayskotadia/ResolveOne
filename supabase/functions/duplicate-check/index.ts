@@ -30,8 +30,9 @@ Deno.serve(async(req:Request)=>{
     if(error)return reply({error:'This issue changed or is no longer open. Check for matches again.'},409)
     return reply({token:data})
   }
+  if(typeof input.citizen_hash!=='string'||!/^[0-9a-f]{64}$/.test(input.citizen_hash))return reply({error:'Citizen identification is required for duplicate checking.'},422)
   if(input.action!=='check'||typeof input.description!=='string'||input.description.trim().length<12||input.description.length>4000||typeof input.lat!=='number'||typeof input.lng!=='number'||!Number.isFinite(input.lat)||!Number.isFinite(input.lng)||Math.abs(input.lat)>90||Math.abs(input.lng)>180)return reply({error:'Add a location and a description of at least 12 characters.'},422)
-  const {data:rows,error}=await db.rpc('duplicate_candidates',{p_lat:input.lat,p_lng:input.lng})
+  const {data:rows,error}=await db.rpc('duplicate_candidates',{p_lat:input.lat,p_lng:input.lng,p_hash:input.citizen_hash})
   if(error)return reply({error:'Nearby reports could not be checked.'},503)
   const limited=(rows||[]).length>100
   const candidates=(rows||[]).slice(0,100)

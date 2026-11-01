@@ -5,6 +5,7 @@ import { DuplicateCheck } from '../src/components/DuplicateCheck'
 import { FollowedIssuePage } from '../src/pages/citizen/FollowedIssuePage'
 import type { ComplaintData } from '../src/types/complaint'
 const mocks=vi.hoisted(()=>({invoke:vi.fn(),rpc:vi.fn()}))
+vi.mock('../src/context/CitizenContext',()=>({useCitizen:()=>({citizenHash:'a'.repeat(64)})}))
 vi.mock('../src/context/ThemeContext',()=>({useTheme:()=>({theme:'light'})}))
 vi.mock('../src/lib/supabaseClient',()=>({supabase:{functions:{invoke:mocks.invoke},rpc:mocks.rpc}}))
 const data:ComplaintData={language:'English',category:'Road Damage/Potholes',description:'There are deep potholes near the school',source:'text',lat:0,lng:0,address:'School road',photoFile:null,photoUrl:null}
@@ -16,11 +17,12 @@ test('shows real matches and follows without submitting a complaint',async()=>{
  mocks.invoke.mockResolvedValueOnce({data:{quality:'usable',matches:[match],limited:false},error:null})
  .mockImplementationOnce((_name,{body})=>Promise.resolve({data:{token:body.token},error:null}))
  render(wrap(<DuplicateCheck data={data}/>))
- await screen.findByText('A similar issue is already reported nearby.')
+ await screen.findByText('You have already reported a similar issue nearby.')
  fireEvent.click(screen.getByRole('button',{name:'Follow this issue'}))
  const link=await screen.findByRole('link',{name:'View status and save your private link'})
  expect(link.getAttribute('href')).toMatch(/^\/citizen\/follow\?token=/)
  expect(mocks.rpc).not.toHaveBeenCalled()
+ expect(mocks.invoke.mock.calls[0][1].body.citizen_hash).toBe('a'.repeat(64))
  expect(mocks.invoke.mock.calls[1][1].body.action).toBe('follow')
  expect(screen.getByText('Following this issue. No new complaint was created.')).toBeTruthy()
 })
@@ -44,14 +46,14 @@ test('older responses cannot replace the latest location results',async()=>{
  view.rerender(wrap(<DuplicateCheck data={{...data,lat:1}}/>))
  await screen.findByText(/No close matches found/)
  await act(async()=>finish({data:{quality:'usable',matches:[match],limited:false},error:null}))
- expect(screen.queryByText('A similar issue is already reported nearby.')).toBeNull()
+ expect(screen.queryByText('You have already reported a similar issue nearby.')).toBeNull()
 })
 test('citizens can dismiss a possible duplicate and retain their own submission',async()=>{
  mocks.invoke.mockResolvedValue({data:{quality:'usable',matches:[match],limited:true},error:null})
  render(wrap(<DuplicateCheck data={data}/>))
  fireEvent.click(await screen.findByRole('button',{name:'Submit my complaint anyway'}))
  expect(screen.getByText(/You can submit your own complaint/)).toBeTruthy()
- expect(screen.getByText(/only the latest 100/)).toBeTruthy()
+ expect(screen.getByText(/only your latest 100/)).toBeTruthy()
  expect(mocks.rpc).not.toHaveBeenCalled()
 })
 test('follow page reads only through a private capability',async()=>{
