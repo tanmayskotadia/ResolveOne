@@ -2,6 +2,7 @@ import { Card, Button } from '../../../components/ui'
 import type { ComplaintData } from '../../../types/complaint'
 import { useTheme } from '../../../context/ThemeContext'
 import { CATEGORIES } from '../../../lib/categories'
+import { useVoiceTyping } from '../../../lib/useVoiceTyping'
 
 interface Step1Props {
   data: ComplaintData
@@ -21,6 +22,11 @@ const LANGUAGES = [
 export function Step1Description({ data, onChange, onNext }: Step1Props) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const voice = useVoiceTyping(
+    LANGUAGES.find(language => language.name === data.language)?.code ?? 'en-IN',
+    data.description,
+    description => onChange({ description, source: 'voice' }),
+  )
   const isNextDisabled = !data.description.trim() || !CATEGORIES.some(category => category === data.category) || !data.language
 
   return (
@@ -35,7 +41,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
               id="language"
               className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none ${isDark ? 'bg-navy-950 border-navy-800 text-white' : 'bg-white border-slate-200'}`}
               value={data.language}
-              onChange={(e) => onChange({ language: e.target.value })}
+              onChange={(e) => { voice.cancel(); onChange({ language: e.target.value }) }}
             >
               {LANGUAGES.map(lang => (
                 <option key={lang.name} value={lang.name}>{lang.name}</option>
@@ -63,9 +69,25 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
               className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-950 border-navy-800 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
               placeholder="Describe the issue in detail..."
               value={data.description}
-              onChange={(e) => onChange({ description: e.target.value, source: 'text' })}
+              onChange={(e) => { voice.cancel(); onChange({ description: e.target.value, source: 'text' }) }}
             />
-
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="button" size="sm" variant={voice.state === 'idle' ? 'secondary' : 'danger'}
+                disabled={!voice.supported || voice.state === 'stopping' || data.description.length >= 4000}
+                onClick={voice.state === 'idle' ? voice.start : voice.stop}>
+                {voice.state === 'idle' ? 'Start voice typing' : voice.state === 'stopping' ? 'Finishing…' : 'Stop voice typing'}
+              </Button>
+              <span className="text-sm text-slate-400" role="status">
+                {voice.state === 'listening' ? `Listening in ${data.language}…` : voice.state === 'stopping' ? 'Finishing transcription…' : `Speak in ${data.language}; review the text before continuing.`}
+              </span>
+            </div>
+            {voice.interim && <p className="text-sm text-slate-400" aria-live="polite">{voice.interim}</p>}
+            {voice.error && <p className="text-sm text-danger" role="alert">{voice.error}</p>}
+            <p className="text-xs text-slate-400">
+              {voice.supported
+                ? 'Your browser may send audio to its speech service. No audio is stored by ResolveOne.'
+                : 'Voice typing is unavailable in this browser. Try a supported browser over HTTPS, or type your complaint.'}
+            </p>
           </div>
         </div>
       </Card>
@@ -98,7 +120,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
 
 
       <div className="flex justify-end">
-        <Button onClick={onNext} disabled={isNextDisabled}>
+        <Button onClick={() => { voice.cancel(); onNext() }} disabled={isNextDisabled}>
           Next Step
         </Button>
       </div>
