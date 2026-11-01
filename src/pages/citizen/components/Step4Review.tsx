@@ -50,6 +50,9 @@ export function Step4Review({ data, submissionId, onBack }: Step4Props) {
         .from('complaint-photos').upload(fileName, data.photoFile)
       // A retry uses the same immutable object and request ID.
       if (uploadError && String(uploadError.statusCode) !== '409') {
+        if (/failed to fetch|network|load failed/i.test(uploadError.message)) {
+          throw new Error('Photo upload failed. The reporting server could not be reached. Check your internet connection and retry. If this continues, contact support. Your report has not been submitted.')
+        }
         throw new Error('Photo upload failed. Please retry. ' + uploadError.message)
       }
       const { data: publicUrlData } = supabase.storage.from('complaint-photos').getPublicUrl(fileName)
