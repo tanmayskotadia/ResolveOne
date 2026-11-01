@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabaseClient'
 import { useCitizen } from '../../../context/CitizenContext'
 import { useTheme } from '../../../context/ThemeContext'
 import toast from 'react-hot-toast'
+import { DuplicateCheck } from '../../../components/DuplicateCheck'
 import { photoError } from '../../../lib/complaintLogic'
 
 interface Step4Props {
@@ -162,6 +163,8 @@ export function Step4Review({ data, submissionId, onBack }: Step4Props) {
         )}
       </Card>
 
+
+      <DuplicateCheck data={data} disabled={isSubmitting} />
 
       <div className="flex justify-between">
         <Button variant="secondary" onClick={onBack} disabled={isSubmitting}>Back</Button>

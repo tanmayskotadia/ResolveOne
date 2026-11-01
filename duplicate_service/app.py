@@ -27,7 +27,9 @@ events=defaultdict(deque)
 @app.middleware('http')
 async def limits(request:Request,call_next):
     if request.url.path != '/health':
-        if int(request.headers.get('content-length','0') or 0)>600000:
+        try: declared=int(request.headers.get('content-length','0') or 0)
+        except ValueError: return JSONResponse({'detail':'Invalid content length'},400)
+        if declared>600000:
             return JSONResponse({'detail':'Request too large'},413)
         now=time.monotonic()
         with rate_lock:
@@ -41,9 +43,11 @@ async def limits(request:Request,call_next):
             while bucket and bucket[0]<now-60: bucket.popleft()
             if len(bucket)>=60: return JSONResponse({'detail':'Try again later'},429)
             bucket.append(now)
-        body=await request.body()
-        if len(body)>600000: return JSONResponse({'detail':'Request too large'},413)
-        request._body=body
+        body=bytearray()
+        async for chunk in request.stream():
+            body.extend(chunk)
+            if len(body)>600000: return JSONResponse({'detail':'Request too large'},413)
+        request._body=bytes(body)
     return await call_next(request)
 
 class Candidate(BaseModel):

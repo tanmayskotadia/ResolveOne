@@ -13,6 +13,7 @@ import { NotFoundPage } from '../pages/NotFoundPage'
 import { AuthorityProtectedRoute } from './AuthorityProtectedRoute'
 import { Navbar } from '../layouts/Navbar'
 
+const FollowedIssuePage = lazy(() => import('../pages/citizen/FollowedIssuePage').then(module => ({ default: module.FollowedIssuePage })))
 const ReportIssuePage = lazy(() => import('../pages/citizen/ReportIssuePage').then(module => ({ default: module.ReportIssuePage })))
 const TrackComplaintPage = lazy(() => import('../pages/citizen/TrackComplaintPage').then(module => ({ default: module.TrackComplaintPage })))
 const AuthorityPage = lazy(() => import('../pages/AuthorityPage').then(module => ({ default: module.AuthorityPage })))
@@ -36,6 +37,8 @@ export function AppRouter() {
                     <Route path="/citizen/verify" element={<AadhaarVerifyPage />} />
                     <Route path="/citizen/report" element={<ReportIssuePage />} />
                     <Route path="/citizen/track" element={<TrackComplaintPage />} />
+
+                    <Route path="/citizen/follow" element={<FollowedIssuePage />} />
 
                     {/* Authority Routes */}
                     <Route path="/authority/login" element={<AuthorityLoginPage />} />

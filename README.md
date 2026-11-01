@@ -1,4 +1,4 @@
-> Current UI: reporting and authority pages run without the optional ML service. Text/photo suggestions, duplicate checks, estimates, insights and service-based voice transcription have been removed from the pages. Select categories manually. The ML service source is retained for future development. Supabase setup and the database migrations are still required for submission, tracking and officer access.
+> Current UI: only duplicate suggestions and private following are enabled on the Review step. The isolated multilingual E5 service and Supabase gateway power this feature; the other intelligence panels remain removed. See [duplicate service setup and limits](duplicate_service/README.md). Existing submission, tracking, authority access and Supabase configuration are preserved.
 
 <div align="center">
 

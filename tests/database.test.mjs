@@ -29,6 +29,9 @@ await db.exec(migration) // Reapplying must preserve data and RPC signatures.
 const reviewMigration = await readFile(new URL('../database/review_fixes.sql', import.meta.url), 'utf8')
 await db.exec(reviewMigration)
 await db.exec(reviewMigration)
+const duplicateMigration=await readFile(new URL('../supabase/migrations/20261101073633_duplicate_following.sql',import.meta.url),'utf8')
+await db.exec(duplicateMigration)
+await db.exec(duplicateMigration)
 after(() => db.close())
 
 const hash = 'a'.repeat(64)
@@ -188,4 +191,48 @@ test('officers cannot bypass atomic updates through direct table writes', async 
   } finally {
     await db.exec('RESET ROLE; ALTER TABLE complaints DISABLE ROW LEVEL SECURITY; ALTER TABLE status_history DISABLE ROW LEVEL SECURITY;')
   }
+})
+
+
+test('duplicate candidates filter before limit and remain private',async()=>{
+ const id=crypto.randomUUID()
+ await submit(id,{...report,lat:10,lng:10})
+ const found=await db.query('SELECT * FROM duplicate_candidates(10,10)')
+ assert.ok(found.rows.some(row=>row.id===id))
+ await db.exec('SET ROLE anon')
+ try { await assert.rejects(db.query('SELECT * FROM duplicate_candidates(10,10)'),/permission denied/) }
+ finally { await db.exec('RESET ROLE') }
+})
+
+test('follow is idempotent, private and does not create another complaint',async()=>{
+ const id=crypto.randomUUID(),token=crypto.randomUUID()
+ await submit(id)
+ const before=(await db.query('SELECT count(*)::int AS n FROM complaints')).rows[0].n
+ await db.query('SELECT follow_duplicate($1,$2)',[id,token])
+ await db.query('SELECT follow_duplicate($1,$2)',[id,token])
+ assert.equal((await db.query('SELECT count(*)::int AS n FROM complaints')).rows[0].n,before)
+ await db.exec('SET ROLE anon')
+ try {
+  const value=(await db.query('SELECT get_followed_complaint($1) AS value',[token])).rows[0].value
+  assert.equal(value.category,report.category)
+  assert.equal(value.description,undefined)
+  assert.equal(value.citizen_identifier_hash,undefined)
+  assert.equal(value.lat,undefined)
+  assert.equal((await db.query('SELECT get_followed_complaint($1) AS value',[crypto.randomUUID()])).rows[0].value,null)
+  await assert.rejects(db.query('SELECT * FROM complaint_follows'),/permission denied/)
+  await assert.rejects(db.query('SELECT follow_duplicate($1,$2)',[id,token]),/permission denied/)
+ } finally { await db.exec('RESET ROLE') }
+ await claim(officer)
+ await update(id,'resolved','submitted','Fixed','https://example.test/proof.jpg')
+ assert.equal((await db.query('SELECT get_followed_complaint($1) AS value',[token])).rows[0].value.status,'resolved')
+ await assert.rejects(db.query('SELECT follow_duplicate($1,$2)',[id,crypto.randomUUID()]),/no longer open/)
+})
+
+test('follow capability cannot be reassigned and quota bounds model requests',async()=>{
+ const first=crypto.randomUUID(),second=crypto.randomUUID(),token=crypto.randomUUID()
+ await submit(first);await submit(second)
+ await db.query('SELECT follow_duplicate($1,$2)',[first,token])
+ await assert.rejects(db.query('SELECT follow_duplicate($1,$2)',[second,token]),/unavailable/)
+ for(let i=0;i<20;i++) assert.equal((await db.query('SELECT duplicate_quota($1) AS ok',['f'.repeat(64)])).rows[0].ok,true)
+ assert.equal((await db.query('SELECT duplicate_quota($1) AS ok',['f'.repeat(64)])).rows[0].ok,false)
 })

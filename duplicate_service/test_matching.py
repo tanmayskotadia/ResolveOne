@@ -48,3 +48,6 @@ def test_no_candidates_does_not_invent_matches(client):
  assert check(client,'There are deep potholes on the main road near the school',[]).json()['matches']==[]
 def test_invalid_coordinates(client):
  assert client.post('/match',json={'description':'A broken road','lat':91,'lng':72,'candidates':[]}).status_code==422
+
+def test_large_request_rejected_before_model(client):
+ assert client.post('/match',content=b'x'*600001,headers={'Content-Type':'application/json'}).status_code==413
