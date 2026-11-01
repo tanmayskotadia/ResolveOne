@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { TrackComplaintPage } from '../src/pages/citizen/TrackComplaintPage'
 import { StatusUpdateControl } from '../src/pages/authority/components/StatusUpdateControl'
 import { AuthorityComplaintDetail } from '../src/pages/authority/components/AuthorityComplaintDetail'
-import { hasCoordinates, latestTransitions } from '../src/lib/complaintLogic'
+import { hasCoordinates, latestTransitions, latestStatusNotes } from '../src/lib/complaintLogic'
 import type { ComplaintRow, StatusHistoryRow } from '../src/types/complaint'
 
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), upload: vi.fn(), history: vi.fn() }))
@@ -95,4 +95,14 @@ test('history failure is visible and retry recovers without inventing a resoluti
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
   expect(screen.getByTestId('map')).toBeTruthy()
   expect(screen.getAllByText('Submitted').length).toBeGreaterThan(0)
+})
+
+
+test('reopened timeline does not reuse notes from an earlier repair', () => {
+  const rows = [history('in-progress', '2026-01-02T00:00:00Z', 'First crew assigned'),
+    history('resolved', '2026-01-03T00:00:00Z', 'First repair complete'),
+    history('in-progress', '2026-01-04T00:00:00Z')]
+  expect(latestStatusNotes(rows)['in-progress']).toBeUndefined()
+  rows.push(history('in-progress', '2026-01-05T00:00:00Z', 'New crew assigned'))
+  expect(latestStatusNotes(rows)['in-progress']).toBe('New crew assigned')
 })

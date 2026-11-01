@@ -10,7 +10,7 @@ import { Button } from '../../components/ui'
 import { hashAadhaar, validateAadhaar } from '../../lib/aadhaarHash'
 import type { ComplaintRow, StatusHistoryRow, ComplaintStatus } from '../../types/complaint'
 import { useTheme } from '../../context/ThemeContext'
-import { hasCoordinates, latestTransitions } from '../../lib/complaintLogic'
+import { hasCoordinates, latestTransitions, latestStatusNotes } from '../../lib/complaintLogic'
 
 // Fix default Leaflet icon (required when bundling with Vite)
 const DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow, iconSize: [25, 41], iconAnchor: [12, 41] })
@@ -486,10 +486,7 @@ function PipelineTimeline({ currentStatus, history, createdAt, isDark }: { curre
   Object.entries(latestTransitions(history)).forEach(([status, row]) => { if (row && status !== 'submitted') timestampMap[status] = row.changed_at })
 
   // Note map
-  const noteMap: Partial<Record<string, string>> = {}
-  for (const row of [...history].sort((a, b) => Date.parse(a.changed_at) - Date.parse(b.changed_at))) {
-    if (row.note) noteMap[String(row.status) === 'open' ? 'under-review' : row.status] = row.note
-  }
+  const noteMap = latestStatusNotes(history)
 
   return (
     <ol className="relative">
@@ -557,7 +554,7 @@ function StatusWidget({ status, isRejected, isDark }: { status: ComplaintStatus,
     </svg>
   )
   let title = STATUS_LABELS[status] || status
-  let description = "Your complaint is currently under review."
+  let description = status === 'submitted' ? "Your complaint has been received." : "Your complaint is currently under review."
   let bgClass = "bg-primary-50"
   
   if (isResolved) {

@@ -23,3 +23,16 @@ export const photoError = (file: File): string | null => {
   }
   return null
 }
+
+/** Notes belong to the latest visit to each status, including reopened repairs. */
+export function latestStatusNotes(history: StatusHistoryRow[]) {
+  const notes: Partial<Record<string, string>> = {}
+  let previous = ''
+  for (const row of [...history].sort((a, b) => Date.parse(a.changed_at) - Date.parse(b.changed_at))) {
+    const status = String(row.status) === 'open' ? 'under-review' : row.status
+    if (status !== previous) delete notes[status]
+    if (row.note) notes[status] = row.note
+    previous = status
+  }
+  return notes
+}

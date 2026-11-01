@@ -1,3 +1,4 @@
+import { hasCoordinates } from '../../../lib/complaintLogic'
 import { useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -44,14 +45,14 @@ const statusBadgeMap: Record<string, any> = {
 export function AuthorityComplaintsMap({ complaints, onSelect }: AuthorityComplaintsMapProps) {
   const mapCenter = useMemo<[number, number]>(() => {
     // Center on the first complaint with a location, or default to Ahmedabad
-    const firstWithLoc = complaints.find(c => typeof c.lat === 'number' && typeof c.lng === 'number' && Number.isFinite(c.lat) && Number.isFinite(c.lng))
+    const firstWithLoc = complaints.find(hasCoordinates)
     if (firstWithLoc && typeof firstWithLoc.lat === 'number' && typeof firstWithLoc.lng === 'number') {
       return [firstWithLoc.lat, firstWithLoc.lng]
     }
     return [23.0225, 72.5714]
   }, [complaints])
 
-  const validComplaints = complaints.filter(c => typeof c.lat === 'number' && typeof c.lng === 'number' && Number.isFinite(c.lat) && Number.isFinite(c.lng) && Math.abs(c.lat) <= 90 && Math.abs(c.lng) <= 180)
+  const validComplaints = complaints.filter(hasCoordinates)
 
   return (
     <Card noPadding className="h-[600px] w-full overflow-hidden relative z-0 animate-fade-in border border-slate-200">
