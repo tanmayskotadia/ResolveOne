@@ -127,6 +127,7 @@ ResolveOne provides separate workflows for citizens reporting civic issues and m
 Citizens can submit civic complaints by providing issue details, selecting a location, and uploading supporting images. Once submitted, they can track the progress of their complaints.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': 'transparent', 'primaryTextColor': '#111827', 'lineColor': '#9CA3AF', 'fontFamily': 'Arial'}}}%%
 flowchart TD
     A([Start])
     B[Open ResolveOne]
@@ -155,15 +156,17 @@ flowchart TD
     K --> L
     L --> M
 
-    classDef startEnd stroke:#4ade80,fill:#f0fdf4
-    classDef action stroke:#38bdf8,fill:#f0f9ff
-    classDef processing stroke:#fb923c,fill:#fff7ed
-    classDef tracking stroke:#a78bfa,fill:#f5f3ff
+    classDef startEnd fill:#bbf7d0,stroke:#16a34a,color:#111827,stroke-width:2px
+    classDef action fill:#bae6fd,stroke:#0284c7,color:#111827,stroke-width:2px
+    classDef processing fill:#fed7aa,stroke:#ea580c,color:#111827,stroke-width:2px
+    classDef tracking fill:#ddd6fe,stroke:#8b5cf6,color:#111827,stroke-width:2px
 
     class A,M startEnd
     class B,C,D,E,F,G,I action
     class H,J processing
     class K,L tracking
+
+    linkStyle default stroke:#9CA3AF,stroke-width:1.8px
 ```
 
 ### 2. Municipal Authority Workflow
@@ -171,6 +174,7 @@ flowchart TD
 Municipal authorities can review submitted complaints, update their status, add resolution details, and provide supporting proof of resolution.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': 'transparent', 'primaryTextColor': '#111827', 'lineColor': '#9CA3AF', 'fontFamily': 'Arial'}}}%%
 flowchart TD
     A([Start])
     B[Authority Login]
@@ -192,8 +196,10 @@ flowchart TD
     C --> D
     D --> E
     E --> F
+
     F -->|No| G
     G --> M
+
     F -->|Yes| H
     H --> I
     I --> J
@@ -202,17 +208,19 @@ flowchart TD
     L --> M
     M --> N
 
-    classDef startEnd stroke:#4ade80,fill:#f0fdf4
-    classDef authority stroke:#38bdf8,fill:#f0f9ff
-    classDef decision stroke:#fb923c,fill:#fff7ed
-    classDef rejected stroke:#f87171,fill:#fef2f2
-    classDef resolved stroke:#2dd4bf,fill:#f0fdfa
+    classDef startEnd fill:#bbf7d0,stroke:#16a34a,color:#111827,stroke-width:2px
+    classDef authority fill:#bae6fd,stroke:#0284c7,color:#111827,stroke-width:2px
+    classDef decision fill:#fed7aa,stroke:#ea580c,color:#111827,stroke-width:2px
+    classDef rejected fill:#fecaca,stroke:#dc2626,color:#111827,stroke-width:2px
+    classDef resolved fill:#99f6e4,stroke:#0d9488,color:#111827,stroke-width:2px
 
     class A,N startEnd
     class B,C,D,E,H,I,J,K authority
     class F decision
     class G rejected
     class L,M resolved
+
+    linkStyle default stroke:#9CA3AF,stroke-width:1.8px
 ```
 
 ## Complaint Lifecycle
@@ -220,26 +228,33 @@ flowchart TD
 Every complaint moves through a series of stages, allowing citizens to monitor its progress and authorities to maintain transparency.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'background': 'transparent', 'primaryTextColor': '#111827', 'lineColor': '#9CA3AF', 'fontFamily': 'Arial'}}}%%
 flowchart LR
-    A[Submitted] --> B[Under Review]
-    B --> C[In Progress]
-    C --> D[Resolved]
+    A[Submitted]
+    B[Under Review]
+    C[In Progress]
+    D[Resolved]
+    E[Rejected]
 
-    B --> E[Rejected]
+    A --> B
+    B --> C
+    C --> D
+    B --> E
 
-    classDef submitted stroke:#38bdf8,fill:#f0f9ff
-    classDef review stroke:#fb923c,fill:#fff7ed
-    classDef progress stroke:#a78bfa,fill:#f5f3ff
-    classDef resolved stroke:#4ade80,fill:#f0fdf4
-    classDef rejected stroke:#f87171,fill:#fef2f2
+    classDef submitted fill:#bae6fd,stroke:#0284c7,color:#111827,stroke-width:2px
+    classDef review fill:#fed7aa,stroke:#ea580c,color:#111827,stroke-width:2px
+    classDef progress fill:#ddd6fe,stroke:#8b5cf6,color:#111827,stroke-width:2px
+    classDef resolved fill:#bbf7d0,stroke:#16a34a,color:#111827,stroke-width:2px
+    classDef rejected fill:#fecaca,stroke:#dc2626,color:#111827,stroke-width:2px
 
     class A submitted
     class B review
     class C progress
     class D resolved
     class E rejected
-```
 
+    linkStyle default stroke:#9CA3AF,stroke-width:1.8px
+```
 ## Technology Stack
 
 | Component | Technology |
