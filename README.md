@@ -67,7 +67,6 @@ ResolveOne connects citizens and municipal authorities through a centralized pla
 ### Architecture Diagram
 
 ```mermaid
-```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'background': 'transparent', 'primaryTextColor': '#F1F5F9', 'lineColor': '#9CA3AF', 'fontFamily': 'Arial'}}}%%
 flowchart TD
     A[Citizen]
@@ -120,7 +119,6 @@ flowchart TD
     class O external
 
     linkStyle default stroke:#9CA3AF,stroke-width:2px
-```
 ```
 
 ## How It Works
