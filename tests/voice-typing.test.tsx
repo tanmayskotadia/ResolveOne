@@ -27,6 +27,7 @@ function result(instance: MockRecognition, texts: string[], final = true) {
   act(() => instance.onresult?.({ resultIndex: 0, results: texts.map(transcript => ({ isFinal: final, 0: { transcript } })) }))
 }
 function start() {
+  fireEvent.click(screen.getByRole('button', { name: 'Speak', exact: true }))
   fireEvent.click(screen.getByRole('button', { name: 'Start voice typing' }))
   return MockRecognition.instances.at(-1)!
 }
@@ -98,6 +99,7 @@ test('permission and network errors permit retry and manual typing', () => {
 test('unsupported browsers retain the manual complaint form; prefixed recognition works', () => {
   vi.stubGlobal('SpeechRecognition', undefined)
   const view = render(<Form />)
+  fireEvent.click(screen.getByRole('button', { name: 'Speak', exact: true }))
   expect((screen.getByRole('button', { name: 'Start voice typing' }) as HTMLButtonElement).disabled).toBe(true)
   expect(screen.getByText(/Voice typing is unavailable/)).toBeTruthy()
   expect((screen.getByRole('button', { name: 'Next Step' }) as HTMLButtonElement).disabled).toBe(false)
@@ -114,4 +116,15 @@ test('voice results respect the description length limit and release the microph
   expect((screen.getByLabelText(/Description/) as HTMLTextAreaElement).value.length).toBe(4000)
   expect(instance.abort).toHaveBeenCalledOnce()
   expect(screen.getByRole('alert').textContent).toContain('4,000 character limit')
+})
+
+test('Type mode hides recording controls and switching back preserves text and releases microphone', () => {
+ render(<Form />)
+ expect(screen.queryByRole('button', { name: 'Start voice typing' })).toBeNull()
+ const instance = start()
+ result(instance, ['spoken words'])
+ fireEvent.click(screen.getByRole('button', { name: 'Type', exact: true }))
+ expect(instance.abort).toHaveBeenCalledOnce()
+ expect(screen.queryByRole('button', { name: 'Start voice typing' })).toBeNull()
+ expect((screen.getByLabelText(/Description/) as HTMLTextAreaElement).value).toBe('Existing text. spoken words')
 })

@@ -96,7 +96,7 @@ function DescriptionForm() {
 
 test('manual reporting works without the intelligence service', () => {
   render(<DescriptionForm />)
-  expect(screen.queryByRole('button', { name: 'Speak' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Type' }).getAttribute('aria-pressed')).toBe('true')
   fireEvent.change(screen.getByLabelText(/Description/), { target: { value: 'The streetlight outside the park is broken' } })
   fireEvent.change(screen.getByLabelText(/Category/), { target: { value: 'Streetlights' } })
   expect((screen.getByRole('button', { name: 'Next Step' }) as HTMLButtonElement).disabled).toBe(false)
