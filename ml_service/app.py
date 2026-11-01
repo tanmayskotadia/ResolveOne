@@ -170,17 +170,30 @@ def load_eta():
     return None, None
 
 
+def predict_eta(model, rows):
+    """A damaged model must not disable the historical estimate or dashboard."""
+    try:
+        values = np.asarray(model.predict([features(row) for row in rows]), dtype=float)
+        if values.shape != (len(rows),) or not np.all(np.isfinite(values)):
+            return None
+        return np.maximum(0, values)
+    except Exception:
+        return None
+
+
 def estimate(data, samples):
     with MODEL_LOCK:
         meta, model = load_eta()
         if meta and data.category in meta['categories'] and data.lat is not None and data.lng is not None:
             row = {"category": data.category, "lat": data.lat, "lng": data.lng,
                    "created_at": datetime.now(timezone.utc).isoformat()}
-            prediction = max(0, float(model.predict([features(row)])[0]))
-            spread = meta['error_hours_p80']
-            return {"source": "catboost", "low_days": round(max(0, prediction - spread) / 24, 1),
-                    "high_days": round((prediction + spread) / 24, 1), "sample_count": meta['sample_count'],
-                    "trained_at": meta['trained_at'], "message": "Estimated total time from submission, with a holdout-error range. Not a deadline."}
+            values = predict_eta(model, [row])
+            if values is not None:
+                prediction = float(values[0])
+                spread = meta['error_hours_p80']
+                return {"source": "catboost", "low_days": round(max(0, prediction - spread) / 24, 1),
+                        "high_days": round((prediction + spread) / 24, 1), "sample_count": meta['sample_count'],
+                        "trained_at": meta['trained_at'], "message": "Estimated total time from submission, with a holdout-error range. Not a deadline."}
     return historical_estimate(data.category, samples)
 
 
@@ -262,8 +275,10 @@ def insights(token: str = Depends(authority)):
         if meta:
             active = [r for r in rows if r['status'] not in ('resolved', 'rejected') and located(r) and r['category'] in meta['categories']]
             if active:
-                hours = model.predict([features(r) for r in active])
-                for row, prediction in zip(active, hours):
+                hours = predict_eta(model, active)
+                if hours is None:
+                    meta = None
+                for row, prediction in zip(active, hours if hours is not None else []):
                     predictions[row['id']] = {'source': 'catboost', 'sample_count': meta['sample_count'],
                                               'low_days': round(max(0, prediction - meta['error_hours_p80']) / 24, 1),
                                               'high_days': round(max(0, prediction + meta['error_hours_p80']) / 24, 1),

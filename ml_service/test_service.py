@@ -277,3 +277,25 @@ def test_identical_resolution_times_do_not_attempt_invalid_training(client, monk
     assert 'identical' in response.json()['detail']
     assert service.TRAIN_LOCK.acquire(blocking=False)
     service.TRAIN_LOCK.release()
+
+
+@pytest.mark.parametrize('bad_result', ['error', 'nan', 'shape'])
+def test_prediction_failure_preserves_history_and_insights(client, monkeypatch, bad_result):
+    rows, records = samples()
+    monkeypatch.setattr(service, 'dataset', lambda token=None: (rows + [row(100)], records))
+    service.app.dependency_overrides[service.authority] = lambda: 'test-token'
+    class BrokenModel:
+        def predict(self, values):
+            if bad_result == 'error':
+                raise ValueError('Feature mismatch')
+            return [float('nan')] * len(values) if bad_result == 'nan' else []
+    meta = {'categories': [CATEGORIES[0]], 'sample_count': 60, 'error_hours_p80': 4, 'trained_at': '2026-01-01'}
+    monkeypatch.setattr(service, 'load_eta', lambda: (meta, BrokenModel()))
+    response = client.post('/estimate', json={'category': CATEGORIES[0], 'lat': 23, 'lng': 72})
+    assert response.status_code == 200
+    assert response.json()['source'] == 'history'
+    result = client.get('/insights')
+    assert result.status_code == 200
+    assert result.json()['predictions'] == {}
+    assert result.json()['model'] is None
+    assert result.json()['completed_samples'] == 60

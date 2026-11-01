@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Badge, Button, Card, Skeleton } from '../components/ui'
 import { supabase } from '../lib/supabaseClient'
 import type { ComplaintRow } from '../types/complaint'
@@ -34,7 +34,9 @@ export function AuthorityPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [selectedComplaint, setSelectedComplaint] = useState<ComplaintRow | null>(null)
 
+  const fetchRequest = useRef(0)
   const fetchComplaints = async () => {
+    const request = ++fetchRequest.current
     setLoading(true)
     setError(null)
 
@@ -42,41 +44,37 @@ export function AuthorityPage() {
       const rows: ComplaintRow[] = []
       for (let offset = 0; ;) {
         const { data, error: err } = await supabase.from('complaints').select('*').order('created_at', { ascending: false }).order('id').range(offset, offset + 999)
+        if (request !== fetchRequest.current) return
         if (err) throw err
         rows.push(...data as ComplaintRow[])
         if (data.length === 0) break
         offset += data.length
       }
       setComplaints(rows)
+      setSelectedComplaint(current => current ? rows.find(row => row.id === current.id) ?? null : null)
     } catch {
-      setError('Failed to load complaints. Please try again.')
-    } finally { setLoading(false) }
+      if (request === fetchRequest.current) setError('Failed to load complaints. Please refresh before making another update.')
+    } finally { if (request === fetchRequest.current) setLoading(false) }
   }
 
   useEffect(() => {
-    fetchComplaints()
+    void fetchComplaints()
+    return () => { fetchRequest.current++ }
   }, [])
 
   if (selectedComplaint) {
     return (
       <div className={`min-h-screen ${isDark ? 'bg-navy-950' : 'bg-slate-50'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {error && <div role="alert" className="mb-4 text-sm text-danger">
+            <p>{error}</p>
+            <Button onClick={() => void fetchComplaints()} loading={loading} variant="secondary" size="sm">Refresh complaint</Button>
+          </div>}
           <AuthorityComplaintDetail
+            key={selectedComplaint.id}
             complaint={selectedComplaint}
             onBack={() => setSelectedComplaint(null)}
-            onUpdated={() => {
-              fetchComplaints()
-              // We could also update the local selectedComplaint state to reflect the new status
-              // But re-fetching the list is safer. To avoid UI jump, we can manually fetch the single complaint.
-              supabase
-                .from('complaints')
-                .select('*')
-                .eq('id', selectedComplaint.id)
-                .single()
-                .then(({ data, error }) => {
-                  if (data && !error) setSelectedComplaint(data as ComplaintRow)
-                })
-            }}
+            onUpdated={() => void fetchComplaints()}
           />
         </div>
       </div>

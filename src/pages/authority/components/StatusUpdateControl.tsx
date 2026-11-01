@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabaseClient'
 import type { ComplaintRow, ComplaintStatus } from '../../../types/complaint'
 import toast from 'react-hot-toast'
 import { useTheme } from '../../../context/ThemeContext'
+import { photoError } from '../../../lib/complaintLogic'
 
 interface StatusUpdateControlProps {
   complaint: ComplaintRow
@@ -26,23 +27,31 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const updateLock = useRef(false)
+  const [error, setError] = useState('')
+  const needsPhoto = newStatus === 'resolved' && (complaint.status !== 'resolved' || !complaint.resolution_photo_url)
 
   const handleUpdate = async () => {
+    if (updateLock.current) return
     if (newStatus === complaint.status && !note.trim() && !photoFile) {
       return // Nothing to update
     }
 
+    updateLock.current = true
+    setError('')
     setIsUpdating(true)
 
     try {
-      let resolutionPhotoUrl = complaint.resolution_photo_url
+      let resolutionPhotoUrl = complaint.status === 'resolved' ? complaint.resolution_photo_url : null
 
-      if (newStatus === 'resolved' && !resolutionPhotoUrl && !photoFile) {
+      if (needsPhoto && !photoFile) {
         throw new Error('A completion proof photo is required to mark this complaint as resolved.')
       }
 
       // Upload photo if resolved and file selected
       if (newStatus === 'resolved' && photoFile) {
+        const invalid = photoError(photoFile)
+        if (invalid) throw new Error(invalid)
         const fileExt = photoFile.name.split('.').pop()
         const fileName = `${complaint.id}_${Date.now()}.${fileExt}`
         const filePath = `resolution_${fileName}`
@@ -77,9 +86,10 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
       toast.success('Status updated successfully')
       onStatusUpdated() // Trigger parent refresh
     } catch (err: any) {
-      console.error(err)
+      setError(err.message || 'An error occurred while updating.')
       toast.error(err.message || 'An error occurred while updating.')
     } finally {
+      updateLock.current = false
       setIsUpdating(false)
     }
   }
@@ -97,6 +107,8 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
               return (
                 <button
                   key={s.value}
+                  disabled={isUpdating}
+                  aria-pressed={isSelected}
                   onClick={() => setNewStatus(s.value)}
                   className={[
                     'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors border',
@@ -119,11 +131,16 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
             </label>
             <div className="flex items-center gap-3">
               <input
+                aria-label="Completion proof photo"
+                disabled={isUpdating}
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => {
                   const file = e.target.files?.[0]
+                  const invalid = file ? photoError(file) : null
+                  setError(invalid || '')
+                  if (invalid) { setPhotoFile(null); e.target.value = ''; return }
                   if (file) setPhotoFile(file)
                   else setPhotoFile(null)
                 }}
@@ -135,7 +152,7 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
               />
             </div>
             {complaint.resolution_photo_url && !photoFile && (
-              <p className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>A photo has already been uploaded for this resolution.</p>
+              <p className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{needsPhoto ? 'This report has previous completion proof. Upload a new photo for the current repair.' : 'A photo has already been uploaded for this resolution.'}</p>
             )}
           </div>
         )}
@@ -146,6 +163,7 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
           </label>
           <textarea
             id="note"
+            disabled={isUpdating}
             maxLength={4000}
             rows={2}
             className={`w-full rounded-lg border p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-900 border-navy-700 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400'}`}
@@ -155,12 +173,13 @@ export function StatusUpdateControl({ complaint, onStatusUpdated }: StatusUpdate
           />
         </div>
 
+        {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         <div className="flex justify-end pt-2">
           <Button 
             size="sm" 
             onClick={handleUpdate} 
             loading={isUpdating}
-            disabled={(newStatus === complaint.status && !note.trim() && !photoFile) || (newStatus === 'resolved' && !complaint.resolution_photo_url && !photoFile)}
+            disabled={(newStatus === complaint.status && !note.trim() && !photoFile) || (needsPhoto && !photoFile)}
           >
             Save Update
           </Button>

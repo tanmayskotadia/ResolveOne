@@ -189,3 +189,8 @@ status_history
 ├── changed_by (uuid, FK → auth.users — the authority officer)
 └── changed_at
 ```
+
+
+## Required review fixes
+
+Apply `database/review_fixes.sql` (or `review_fixes.sql` from this directory) **after `logic_fixes.sql` and before deploying the frontend**. It requires fresh completion proof after reopening a complaint, restricts officer writes to the atomic status RPC, and adds `track_complaint` so tracking reads status and history in one database snapshot. It preserves existing reports and is safe to rerun. Full order: original schema → resolution scripts → intelligence upgrade → logic fixes → review fixes. Do not rerun the baseline afterward.

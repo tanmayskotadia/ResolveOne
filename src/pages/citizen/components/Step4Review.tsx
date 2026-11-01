@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabaseClient'
 import { useCitizen } from '../../../context/CitizenContext'
 import { useTheme } from '../../../context/ThemeContext'
 import toast from 'react-hot-toast'
+import { photoError } from '../../../lib/complaintLogic'
 import { ReportIntelligence } from '../../../components/ReportIntelligence'
 
 interface Step4Props {
@@ -41,40 +42,19 @@ export function Step4Review({ data, submissionId, onBack }: Step4Props) {
     setError(null)
 
     try {
-      let photo_url: string | null = null
-      let photoWarning: string | null = null
-
-      // 1. Attempt photo upload — treated as optional.
-      //    If it fails (e.g. Storage RLS not yet configured), we warn but continue.
-      if (data.photoFile) {
-        try {
-          const fileExt = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[data.photoFile.type] || 'jpg'
-          const fileName = `complaint_${submissionId}.${fileExt}`
-
-          const { error: uploadError } = await supabase.storage
-            .from('complaint-photos')
-            .upload(fileName, data.photoFile)
-
-          if (uploadError && String(uploadError.statusCode) !== '409') {
-            // Log for debugging but don't throw — complaint still gets submitted
-            console.warn('[Step4Review] Photo upload failed:', uploadError.message)
-            photoWarning = 'Photo could not be uploaded. Your complaint will still be submitted without it.'
-          } else {
-            const { data: publicUrlData } = supabase.storage
-              .from('complaint-photos')
-              .getPublicUrl(fileName)
-            photo_url = publicUrlData.publicUrl
-          }
-        } catch (uploadErr: any) {
-          console.warn('[Step4Review] Photo upload exception:', uploadErr?.message)
-          photoWarning = 'Photo could not be uploaded. Your complaint will still be submitted without it.'
-        }
+      if (!data.photoFile) throw new Error('Add a photo before submitting your complaint.')
+      const invalid = photoError(data.photoFile)
+      if (invalid) throw new Error(invalid)
+      const fileExt = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[data.photoFile.type]
+      const fileName = `complaint_${submissionId}.${fileExt}`
+      const { error: uploadError } = await supabase.storage
+        .from('complaint-photos').upload(fileName, data.photoFile)
+      // A retry uses the same immutable object and request ID.
+      if (uploadError && String(uploadError.statusCode) !== '409') {
+        throw new Error('Photo upload failed. Please retry. ' + uploadError.message)
       }
-
-      // Show photo warning early so user sees it while complaint is being submitted
-      if (photoWarning) {
-        toast(photoWarning, { icon: '⚠️', duration: 6000 })
-      }
+      const { data: publicUrlData } = supabase.storage.from('complaint-photos').getPublicUrl(fileName)
+      const photo_url = publicUrlData.publicUrl
 
       // Insert and return this exact complaint's code in one idempotent transaction.
       const { data: code, error: dbError } = await supabase.rpc('submit_complaint', {
@@ -86,7 +66,7 @@ export function Step4Review({ data, submissionId, onBack }: Step4Props) {
           lat: data.lat,
           lng: data.lng,
           address: data.address,
-          photo_url,  // null if upload failed — that's acceptable
+          photo_url,
         },
       })
 
@@ -149,7 +129,7 @@ export function Step4Review({ data, submissionId, onBack }: Step4Props) {
   return (
     <div className="space-y-6 animate-fade-in">
       {error && (
-        <div className={`p-3 text-sm rounded-lg border ${isDark ? 'bg-red-950/30 text-red-400 border-red-900/50' : 'bg-red-50 text-danger border-red-200'}`}>{error}</div>
+        <div role="alert" className={`p-3 text-sm rounded-lg border ${isDark ? 'bg-red-950/30 text-red-400 border-red-900/50' : 'bg-red-50 text-danger border-red-200'}`}>{error}</div>
       )}
 
       <h3 className={`text-lg font-semibold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Review & Submit</h3>

@@ -4,6 +4,7 @@ import type { ComplaintData } from '../../../types/complaint'
 import { useTheme } from '../../../context/ThemeContext'
 import { IssueAssistant } from '../../../components/IssueAssistant'
 import { CATEGORIES } from '../../../lib/intelligence'
+import { photoError } from '../../../lib/complaintLogic'
 
 interface Step3Props {
   data: ComplaintData
@@ -33,9 +34,9 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate type
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-        setFileError('Choose a JPEG, PNG or WebP photo smaller than 5 MB.')
+      const invalid = photoError(file)
+      if (invalid) {
+        setFileError(invalid)
         e.target.value = ''
         return
       }
@@ -45,6 +46,7 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
   }
 
   const handleRemove = () => {
+    setFileError('')
     onChange({ photoFile: null })
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -75,11 +77,23 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
                 : (isDark ? 'border-navy-700 hover:border-navy-500 bg-navy-950/50 hover:bg-navy-950 cursor-pointer flex flex-col items-center justify-center p-8' : 'border-slate-200 hover:border-primary-300 bg-slate-50 hover:bg-primary-50 cursor-pointer flex flex-col items-center justify-center p-8')
             ].join(' ')}
             onClick={() => !preview && fileInputRef.current?.click()}
+            role={!preview ? 'button' : undefined}
+            tabIndex={!preview ? 0 : undefined}
+            aria-label={!preview ? 'Choose complaint photo' : undefined}
+            onKeyDown={event => {
+              if (!preview && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault()
+                fileInputRef.current?.click()
+              }
+            }}
           >
             {preview ? (
               <div className="relative w-full h-64 rounded-xl overflow-hidden shadow-sm group">
-                <img src={preview} alt="Complaint preview" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <img src={preview} alt="Complaint preview" className="w-full h-full object-cover" onError={() => {
+                  handleRemove()
+                  setFileError('This photo could not be opened. Choose another JPEG, PNG or WebP image.')
+                }} />
+                <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
                   <Button variant="secondary" onClick={(e) => {
                     e.stopPropagation()
                     fileInputRef.current?.click()
@@ -96,12 +110,14 @@ export function Step3Photo({ data, onChange, onNext, onBack }: Step3Props) {
                   </svg>
                 </div>
                 <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Tap to upload a photo</span>
-                <span className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>JPEG, PNG up to 5MB</span>
+                <span className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>JPEG, PNG or WebP up to 5MB</span>
               </>
             )}
             
             <input
               type="file"
+              aria-label="Complaint photo"
+              onClick={event => event.stopPropagation()}
               accept="image/jpeg,image/png,image/webp"
               className="hidden"
               ref={fileInputRef}

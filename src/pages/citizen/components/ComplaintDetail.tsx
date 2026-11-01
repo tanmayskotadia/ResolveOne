@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
+import { hasCoordinates } from '../../../lib/complaintLogic'
 import { useTheme } from '../../../context/ThemeContext'
 import { Badge } from '../../../components/ui'
 import { Spinner } from '../../../components/ui/Spinner'
@@ -142,7 +143,7 @@ export function ComplaintDetail({ complaint, onBack }: ComplaintDetailProps) {
       </div>
 
       {/* ── map ── */}
-      {complaint.lat && complaint.lng && (
+      {hasCoordinates(complaint) && (
         <div className={`${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-100'} rounded-xl border shadow-card overflow-hidden mb-4`}>
           <div className="h-48 w-full relative z-0">
             <MapContainer

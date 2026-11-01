@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useId,
   type InputHTMLAttributes,
   type ReactNode,
 } from 'react'
@@ -26,7 +27,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   },
   ref
 ) {
-  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
+  const generatedId = useId()
+  const inputId = id ?? generatedId
   const hasError = Boolean(error)
   const { theme } = useTheme()
   const isDark = theme === 'dark'

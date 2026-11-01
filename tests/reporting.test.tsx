@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { Step1Description } from '../src/pages/citizen/components/Step1Description'
 import { Step2Location } from '../src/pages/citizen/components/Step2Location'
+import { Step3Photo } from '../src/pages/citizen/components/Step3Photo'
 import { Step4Review } from '../src/pages/citizen/components/Step4Review'
 import type { ComplaintData } from '../src/types/complaint'
 
@@ -15,7 +16,7 @@ vi.mock('../src/context/ThemeContext', () => ({ useTheme: () => ({ theme: 'light
 vi.mock('../src/context/CitizenContext', () => ({ useCitizen: () => ({ citizenHash: 'a'.repeat(64) }) }))
 vi.mock('../src/components/IssueAssistant', () => ({ IssueAssistant: () => null }))
 vi.mock('../src/components/ReportIntelligence', () => ({ ReportIntelligence: () => null }))
-vi.mock('../src/lib/intelligence', () => ({ intelligence: mocks.intelligence }))
+vi.mock('../src/lib/intelligence', () => ({ intelligence: mocks.intelligence, CATEGORIES: ['Road Damage/Potholes'] }))
 vi.mock('../src/lib/supabaseClient', () => ({ supabase: {
   rpc: mocks.rpc,
   storage: { from: () => ({ upload: mocks.upload, getPublicUrl: () => ({ data: { publicUrl: 'https://example.test/photo.png' } }) }) },
@@ -139,4 +140,38 @@ test('leaving the description step releases the microphone', async () => {
   view.unmount()
   expect(audio.stopTrack).toHaveBeenCalled()
   expect(mocks.intelligence).not.toHaveBeenCalled()
+})
+
+
+test('failed required photo upload keeps the report unsubmitted and allows retry', async () => {
+  mocks.upload.mockResolvedValueOnce({ error: { message: 'Storage unavailable', statusCode: '503' } })
+  mocks.rpc.mockResolvedValueOnce({ data: 'CC-RETRY', error: null })
+  const photo = new File(['photo'], 'photo.png', { type: 'image/png' })
+  render(<MemoryRouter><Step4Review data={{ ...initial, photoFile: photo }} submissionId="photo-retry" onBack={() => {}} /></MemoryRouter>)
+  fireEvent.click(screen.getByRole('button', { name: 'Submit Complaint' }))
+  expect((await screen.findByRole('alert')).textContent).toContain('Photo upload failed')
+  expect(mocks.rpc).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Submit Complaint' }))
+  await screen.findByText('CC-RETRY')
+  expect(mocks.rpc).toHaveBeenCalledTimes(1)
+})
+
+function PhotoForm() {
+  const [value, setValue] = useState(initial)
+  return <Step3Photo data={value} onChange={updates => setValue(old => ({ ...old, ...updates }))} onNext={() => {}} onBack={() => {}} />
+}
+
+test('photo picker works with keyboard and rejects empty or unreadable images', async () => {
+  render(<PhotoForm />)
+  const input = screen.getByLabelText('Complaint photo') as HTMLInputElement
+  const click = vi.spyOn(input, 'click')
+  fireEvent.keyDown(screen.getByRole('button', { name: 'Choose complaint photo' }), { key: 'Enter' })
+  expect(click).toHaveBeenCalledTimes(1)
+  fireEvent.change(input, { target: { files: [new File([], 'empty.png', { type: 'image/png' })] } })
+  expect(screen.getByRole('alert').textContent).toContain('non-empty')
+  expect((screen.getByRole('button', { name: 'Next Step' }) as HTMLButtonElement).disabled).toBe(true)
+  fireEvent.change(input, { target: { files: [new File(['broken'], 'bad.png', { type: 'image/png' })] } })
+  fireEvent.error(await screen.findByAltText('Complaint preview'))
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Next Step' }) as HTMLButtonElement).disabled).toBe(true))
+  expect(screen.getByRole('alert').textContent).toContain('could not be opened')
 })

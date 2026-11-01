@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -11,6 +11,7 @@ import type { ComplaintRow, StatusHistoryRow } from '../../../types/complaint'
 import { shortCode } from '../../citizen/components/ComplaintCard'
 import { StatusUpdateControl } from './StatusUpdateControl'
 import type { Profile } from '../../../types/profile'
+import { hasCoordinates } from '../../../lib/complaintLogic'
 import { useTheme } from '../../../context/ThemeContext'
 
 // Fix default Leaflet icon
@@ -93,41 +94,37 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
   const [loading, setLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
 
-  const fetchData = async () => {
+  const [historyError, setHistoryError] = useState('')
+  const request = useRef(0)
+  const fetchData = useCallback(async () => {
+    const current = ++request.current
     setLoading(true)
-    
-    // 1. Fetch History
-    const historyPromise = supabase
-      .from('status_history')
-      .select('*')
-      .eq('complaint_id', complaint.id)
-      .order('changed_at', { ascending: true })
-
-    // 2. Fetch Citizen Profile (if not anonymous)
-    let citizenPromise: any = Promise.resolve({ data: null, error: null })
-    if (complaint.citizen_id) {
-      citizenPromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', complaint.citizen_id)
-        .single()
+    setHistoryError('')
+    setHistory([])
+    setCitizen(null)
+    try {
+      const [historyRes, citizenRes] = await Promise.all([
+        supabase.from('status_history').select('*').eq('complaint_id', complaint.id).order('changed_at', { ascending: true }),
+        complaint.citizen_id
+          ? supabase.from('profiles').select('*').eq('id', complaint.citizen_id).single()
+          : Promise.resolve({ data: null, error: null }),
+      ])
+      if (current !== request.current) return
+      if (historyRes.error) throw historyRes.error
+      setHistory(historyRes.data ?? [])
+      setCitizen(citizenRes.error ? null : citizenRes.data as Profile | null)
+    } catch {
+      if (current === request.current) setHistoryError('Status history could not be loaded. Please retry.')
+    } finally {
+      if (current === request.current) setLoading(false)
     }
-
-    const [historyRes, citizenRes] = await Promise.all([historyPromise, citizenPromise])
-    
-    if (historyRes.error) console.error('[AuthorityDetail] history error:', historyRes.error.message)
-    else setHistory(historyRes.data ?? [])
-
-    if (citizenRes.error) console.error('[AuthorityDetail] citizen error:', citizenRes.error?.message)
-    else if (citizenRes.data) setCitizen(citizenRes.data as Profile)
-    else setCitizen(null) // Anonymous citizen
-
-    setLoading(false)
-  }
+  }, [complaint.id, complaint.citizen_id])
 
   useEffect(() => {
-    fetchData()
-  }, [complaint.id])
+    void fetchData()
+    return () => { request.current++ }
+  }, [fetchData, complaint.updated_at])
+  useEffect(() => { setImgError(false) }, [complaint.photo_url])
 
   const handleStatusUpdated = () => {
     // Refresh history and trigger parent to refresh complaints list
@@ -143,7 +140,7 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
         at: h.changed_at,
         by: h.changed_by
       }))
-    : [{ status: complaint.status, label: statusLabel[complaint.status] ?? complaint.status, note: null, at: complaint.created_at, by: null }]
+    : [{ status: 'submitted', label: 'Submitted', note: null, at: complaint.created_at, by: null }]
 
   const statusVariant = statusBadgeMap[complaint.status] ?? 'default'
 
@@ -167,7 +164,7 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
           <div className={`rounded-xl border shadow-sm overflow-hidden ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-200'}`}>
             <div className={`px-5 py-4 flex justify-between items-start gap-4 ${isDark ? 'bg-navy-950/50' : 'bg-gradient-to-r from-slate-800 to-slate-900'}`}>
               <div>
-                <p className="text-slate-400 text-xs font-mono">{shortCode(complaint.id)}</p>
+                <p className="text-slate-400 text-xs font-mono">{complaint.complaint_code || shortCode(complaint.id)}</p>
                 <h1 className="text-white text-lg font-bold mt-1">{complaint.category}</h1>
               </div>
               <Badge variant={statusVariant} />
@@ -192,7 +189,7 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
                 <div>
                   <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Reported By</p>
                   <p className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-                    {loading ? <Spinner size="sm" /> : citizen?.full_name || 'Anonymous Citizen'}
+                    {loading ? <Spinner size="sm" /> : citizen?.full_name || (complaint.citizen_id ? 'Citizen' : 'Anonymous Citizen')}
                   </p>
                 </div>
                 <div>
@@ -204,7 +201,7 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
           </div>
 
           {/* Map */}
-          {complaint.lat && complaint.lng && (
+          {hasCoordinates(complaint) && (
             <div className={`rounded-xl border shadow-sm overflow-hidden ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-200'}`}>
               <div className="h-64 w-full relative z-0">
                 <MapContainer
@@ -241,7 +238,7 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
           )}
 
           {/* Resolution Photo */}
-          {complaint.resolution_photo_url && (
+          {complaint.status === 'resolved' && complaint.resolution_photo_url && (
             <div className={`rounded-xl border shadow-sm overflow-hidden ${isDark ? 'bg-navy-900 border-emerald-900/50' : 'bg-white border-success-200'}`}>
               <div className={`px-5 py-3 border-b flex items-center gap-2 ${isDark ? 'bg-emerald-900/20 border-emerald-900/50' : 'bg-success-50 border-success-100'}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-success-600'}`}>
@@ -268,6 +265,11 @@ export function AuthorityComplaintDetail({ complaint, onBack, onUpdated }: Autho
               <div className="flex items-center gap-2 py-2">
                 <Spinner size="sm" />
                 <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>Loading history...</span>
+              </div>
+            ) : historyError ? (
+              <div role="alert" className="text-sm text-danger">
+                <p>{historyError}</p>
+                <button onClick={() => void fetchData()} className="mt-2 underline">Retry history</button>
               </div>
             ) : (
               <ol className="relative">

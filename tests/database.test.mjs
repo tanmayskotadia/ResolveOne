@@ -26,6 +26,9 @@ await db.exec(await readFile(new URL('../database/intelligence_upgrade.sql', imp
 const migration = await readFile(new URL('../database/logic_fixes.sql', import.meta.url), 'utf8')
 await db.exec(migration)
 await db.exec(migration) // Reapplying must preserve data and RPC signatures.
+const reviewMigration = await readFile(new URL('../database/review_fixes.sql', import.meta.url), 'utf8')
+await db.exec(reviewMigration)
+await db.exec(reviewMigration)
 after(() => db.close())
 
 const hash = 'a'.repeat(64)
@@ -131,4 +134,58 @@ test('anonymous users cannot execute the private nearby search', async () => {
   try {
     await assert.rejects(db.query("SELECT * FROM nearby_complaints(0, 0, now() - interval '30 days', 501)"), /permission denied/)
   } finally { await db.exec('RESET ROLE') }
+})
+
+
+test('reopened repairs require new proof, while notes on a current resolution retain proof', async () => {
+  await claim(officer)
+  const id = crypto.randomUUID()
+  await submit(id)
+  const oldPhoto = 'https://example.test/first.jpg'
+  await update(id, 'resolved', 'submitted', 'First repair', oldPhoto)
+  await update(id, 'resolved', 'resolved', 'Inspection complete')
+  await update(id, 'in-progress', 'resolved', 'Reopened')
+  await assert.rejects(update(id, 'resolved', 'in-progress'), /new resolution photo/)
+  await assert.rejects(update(id, 'resolved', 'in-progress', null, oldPhoto), /new resolution photo/)
+  await update(id, 'resolved', 'in-progress', 'Second repair', 'https://example.test/second.jpg')
+  assert.equal((await db.query('SELECT resolution_photo_url FROM complaints WHERE id=$1', [id])).rows[0].resolution_photo_url, 'https://example.test/second.jpg')
+})
+
+test('tracking returns one consistent private snapshot for the exact code and hash', async () => {
+  await claim(officer)
+  const id = crypto.randomUUID()
+  const code = await submit(id)
+  await update(id, 'in-progress', 'submitted', 'Assigned')
+  const track = async (identifier, value) => (await db.query('SELECT track_complaint($1, $2) AS result', [identifier, value])).rows[0].result
+  await db.exec('SET ROLE anon')
+  try {
+    const data = await track(hash, ` ${code.toLowerCase()} `)
+    assert.equal(data.complaint.id, id)
+    assert.equal(data.complaint.status, 'in-progress')
+    assert.equal(data.history[0].status, data.complaint.status)
+    assert.equal(data.complaint.citizen_identifier_hash, undefined)
+    assert.equal(data.history[0].changed_by, undefined)
+    assert.equal(await track('b'.repeat(64), code), null)
+    assert.equal(await track(hash, code + 'x'), null)
+    assert.equal(await track(hash, ''), null)
+  } finally { await db.exec('RESET ROLE') }
+})
+
+test('officers cannot bypass atomic updates through direct table writes', async () => {
+  await claim(officer)
+  const id = crypto.randomUUID()
+  await submit(id)
+  await db.exec(`ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE status_history ENABLE ROW LEVEL SECURITY;
+    GRANT SELECT, UPDATE ON complaints TO authenticated;
+    GRANT INSERT ON status_history TO authenticated;
+    CREATE POLICY test_read ON complaints FOR SELECT TO authenticated USING (true);`)
+  await db.exec('SET ROLE authenticated')
+  try {
+    const result = await db.query("UPDATE complaints SET status='resolved' WHERE id=$1 RETURNING id", [id])
+    assert.equal(result.rows.length, 0)
+    await assert.rejects(db.query("INSERT INTO status_history(complaint_id,status) VALUES ($1,'resolved')", [id]), /row-level security/)
+  } finally {
+    await db.exec('RESET ROLE; ALTER TABLE complaints DISABLE ROW LEVEL SECURITY; ALTER TABLE status_history DISABLE ROW LEVEL SECURITY;')
+  }
 })

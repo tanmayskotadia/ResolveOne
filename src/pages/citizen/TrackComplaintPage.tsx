@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -10,6 +10,7 @@ import { Button } from '../../components/ui'
 import { hashAadhaar, validateAadhaar } from '../../lib/aadhaarHash'
 import type { ComplaintRow, StatusHistoryRow, ComplaintStatus } from '../../types/complaint'
 import { useTheme } from '../../context/ThemeContext'
+import { hasCoordinates, latestTransitions } from '../../lib/complaintLogic'
 
 // Fix default Leaflet icon (required when bundling with Vite)
 const DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow, iconSize: [25, 41], iconAnchor: [12, 41] })
@@ -118,6 +119,9 @@ export function TrackComplaintPage() {
   const [result, setResult] = useState<TrackResult | null>(null)
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const lookup = useRef(0)
+  const lookupLock = useRef(false)
+  useEffect(() => () => { lookup.current++ }, [])
 
   // ── Input handling ──────────────────────────────────────────────────────────
 
@@ -125,6 +129,7 @@ export function TrackComplaintPage() {
     const digits = val.replace(/\D/g, '').slice(0, 12)
     const formatted = digits.replace(/(.{4})(.{4})(.{1,4})/, '$1 $2 $3').trim()
     setAadhaar(formatted)
+    setResult(null)
     setError(null)
   }
 
@@ -132,6 +137,7 @@ export function TrackComplaintPage() {
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault()
+    if (lookupLock.current) return
     setError(null)
     setResult(null)
 
@@ -140,31 +146,30 @@ export function TrackComplaintPage() {
     if (!valid) { setError(validErr ?? 'Invalid Aadhaar.'); return }
     if (!complaintCode.trim()) { setError('Please enter your Complaint ID.'); return }
 
+    const code = complaintCode.trim().toUpperCase()
+    const request = ++lookup.current
+    lookupLock.current = true
     setLoading(true)
     try {
       const hash = await hashAadhaar(rawAadhaar)
+      if (request !== lookup.current) return
       setAadhaar('') // Clear immediately after hashing – never keep raw
 
-      const { data: complaints, error: dbErr } = await supabase
-        .rpc('get_complaints_by_hash', { p_hash: hash, p_complaint_code: complaintCode.trim() })
+      const { data: tracking, error: dbErr } = await supabase
+        .rpc('track_complaint', { p_hash: hash, p_complaint_code: code })
+      if (request !== lookup.current) return
 
       if (dbErr) throw new Error(dbErr.message)
-      if (!complaints || complaints.length === 0) {
+      if (!tracking?.complaint) {
         setError('Complaint not found. Please check your Complaint ID and Aadhaar number and try again.')
         return
       }
 
-      const complaint = complaints[0] as ComplaintRow
-
-      const { data: history, error: histErr } = await supabase
-        .rpc('get_status_history_by_hash', { p_hash: hash, p_complaint_code: complaintCode.trim() })
-
-      if (histErr) throw new Error(histErr.message)
-      setResult({ complaint, history: (history ?? []) as StatusHistoryRow[] })
+      setResult(tracking as TrackResult)
     } catch (err: any) {
-      setError(err.message || 'Lookup failed. Please try again.')
+      if (request === lookup.current) setError(err.message || 'Lookup failed. Please try again.')
     } finally {
-      setLoading(false)
+      if (request === lookup.current) { lookupLock.current = false; setLoading(false) }
     }
   }
 
@@ -210,10 +215,11 @@ export function TrackComplaintPage() {
               </label>
               <input
                 id="complaint-id"
+                disabled={loading}
                 type="text"
                 placeholder="e.g. CC-2026-00001"
                 value={complaintCode}
-                onChange={e => { setComplaintCode(e.target.value.toUpperCase()); setError(null) }}
+                onChange={e => { setComplaintCode(e.target.value.toUpperCase()); setError(null); setResult(null) }}
                 className={`w-full rounded-xl border px-4 py-2.5 font-mono text-sm tracking-wider focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow ${
                   isDark ? 'bg-navy-950 border-navy-700 text-white placeholder:text-navy-600' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-300'
                 }`}
@@ -226,6 +232,7 @@ export function TrackComplaintPage() {
               </label>
               <input
                 id="track-aadhaar"
+                disabled={loading}
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
@@ -325,7 +332,7 @@ export function TrackComplaintPage() {
 
               {/* RESOLUTION DETAILS — only shown when status is explicitly 'resolved' */}
               {result.complaint.status === 'resolved' && (() => {
-                const resolvedHistory = result.history.find(h => h.status === 'resolved');
+                const resolvedHistory = latestTransitions(result.history).resolved;
                 // Resolve URL — handles both full URLs and bare storage paths
                 const resolvedPhotoUrl = resolveResolutionPhotoUrl(result.complaint.resolution_photo_url)
                 const hasPhoto = Boolean(resolvedPhotoUrl);
@@ -403,7 +410,7 @@ export function TrackComplaintPage() {
                         <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{result.complaint.address || 'Location provided via map coordinates.'}</p>
                       </div>
                     </div>
-                    {result.complaint.lat && result.complaint.lng && (
+                    {hasCoordinates(result.complaint) && (
                       <div className={`rounded-xl overflow-hidden border mt-auto flex-1 min-h-[200px] flex flex-col ${isDark ? 'border-navy-700' : 'border-slate-200'}`}>
                         <div className="flex-1 w-full relative z-0">
                           <MapContainer
@@ -476,11 +483,13 @@ export function TrackComplaintPage() {
 function PipelineTimeline({ currentStatus, history, createdAt, isDark }: { currentStatus: ComplaintStatus; history: StatusHistoryRow[]; createdAt: string; isDark?: boolean }) {
   // Build a timestamp map from real history
   const timestampMap: Partial<Record<string, string>> = { submitted: createdAt }
-  history.forEach(h => { if (!timestampMap[h.status]) timestampMap[h.status] = h.changed_at })
+  Object.entries(latestTransitions(history)).forEach(([status, row]) => { if (row && status !== 'submitted') timestampMap[status] = row.changed_at })
 
   // Note map
   const noteMap: Partial<Record<string, string>> = {}
-  history.forEach(h => { if (h.note && !noteMap[h.status]) noteMap[h.status] = h.note })
+  for (const row of [...history].sort((a, b) => Date.parse(a.changed_at) - Date.parse(b.changed_at))) {
+    if (row.note) noteMap[String(row.status) === 'open' ? 'under-review' : row.status] = row.note
+  }
 
   return (
     <ol className="relative">

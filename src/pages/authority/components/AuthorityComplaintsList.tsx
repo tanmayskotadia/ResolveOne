@@ -57,16 +57,17 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
       <Card noPadding className={`p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm border ${isDark ? 'bg-navy-900 border-navy-800' : 'bg-white border-slate-100'}`}>
         <div className="w-full sm:w-64">
           <Input 
-            id="search" 
+            id="search"
+            aria-label="Search complaints"
             placeholder="Search complaint code or description…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto min-w-0">
           <select 
             aria-label="Filter by status"
-            className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
+            className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 min-w-0 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -74,7 +75,7 @@ export function AuthorityComplaintsList({ complaints, onSelect }: AuthorityCompl
           </select>
           <select 
             aria-label="Filter by category"
-            className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
+            className={`rounded-lg border p-2 text-sm focus:ring-2 focus:ring-primary outline-none flex-1 min-w-0 ${isDark ? 'bg-navy-950 border-navy-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >

@@ -23,7 +23,7 @@ const variantConfig: Record<
   'under-review': {
     classes: 'bg-red-50 text-danger border border-red-200',
     dotColor: 'bg-danger',
-    defaultLabel: 'Open',
+    defaultLabel: 'Under Review',
   },
   'in-progress': {
     classes: 'bg-amber-50 text-warning border border-amber-200',
