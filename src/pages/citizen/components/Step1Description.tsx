@@ -1,27 +1,13 @@
-import { useEffect, useState, useRef } from 'react'
 import { Card, Button } from '../../../components/ui'
-import { Spinner } from '../../../components/ui/Spinner'
 import type { ComplaintData } from '../../../types/complaint'
 import { useTheme } from '../../../context/ThemeContext'
-import { IssueAssistant } from '../../../components/IssueAssistant'
-import { intelligence } from '../../../lib/intelligence'
+import { CATEGORIES } from '../../../lib/categories'
 
 interface Step1Props {
   data: ComplaintData
   onChange: (updates: Partial<ComplaintData>) => void
   onNext: () => void
 }
-
-const CATEGORIES = [
-  'Garbage/Waste',
-  'Road Damage/Potholes',
-  'Streetlights',
-  'Water Leakage/Supply',
-  'Drainage/Sewage',
-  'Electricity',
-  'Public Infrastructure',
-  'Other'
-]
 
 const LANGUAGES = [
   { name: 'English', code: 'en-IN' },
@@ -35,131 +21,7 @@ const LANGUAGES = [
 export function Step1Description({ data, onChange, onNext }: Step1Props) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
-  const [activeTab, setActiveTab] = useState<'type' | 'speak'>(data.source === 'voice' ? 'speak' : 'type')
-  const [isRecording, setIsRecording] = useState(false)
-  const [isTranscribing, setIsTranscribing] = useState(false)
-  const [sttError, setSttError] = useState<string | null>(null)
-  
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const recordingLock = useRef(false)
-  const recordingGeneration = useRef(0)
-  const transcriptionRequest = useRef<AbortController | null>(null)
-
-  useEffect(() => () => {
-    recordingGeneration.current++
-    transcriptionRequest.current?.abort()
-    const recorder = mediaRecorderRef.current
-    if (recorder) {
-      recorder.onstop = null
-      recorder.ondataavailable = null
-      if (recorder.state !== 'inactive') recorder.stop()
-      recorder.stream.getTracks().forEach(track => track.stop())
-    }
-  }, [])
-
-  const startRecording = async () => {
-    if (recordingLock.current) return
-    recordingLock.current = true
-    const generation = ++recordingGeneration.current
-    let stream: MediaStream | null = null
-    try {
-      setSttError(null)
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      if (generation !== recordingGeneration.current) {
-        stream.getTracks().forEach(track => track.stop())
-        return
-      }
-      const mediaRecorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
-      const chunks: Blob[] = []
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data)
-        }
-      }
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: mediaRecorder.mimeType })
-        mediaRecorder.stream.getTracks().forEach(track => track.stop())
-        if (generation !== recordingGeneration.current) return
-        setIsRecording(false)
-        await transcribeAudio(audioBlob, generation)
-      }
-
-      mediaRecorder.start()
-      setIsRecording(true)
-    } catch (err: any) {
-      stream?.getTracks().forEach(track => track.stop())
-      if (generation !== recordingGeneration.current) return
-      recordingLock.current = false
-      console.error('Microphone error:', err)
-      if (err.name === 'NotAllowedError') {
-        setSttError('Microphone access denied. Please allow mic access or use the "Type" tab.')
-      } else {
-        setSttError('Could not access microphone. Please try typing instead.')
-      }
-    }
-  }
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
-      setIsTranscribing(true)
-    }
-  }
-
-  const transcribeAudio = async (blob: Blob, generation: number) => {
-    setIsTranscribing(true)
-    onChange({ source: 'voice' })
-    const controller = new AbortController()
-    transcriptionRequest.current = controller
-    try {
-      const formData = new FormData()
-      formData.append('file', blob, blob.type.includes('mp4') ? 'audio.mp4' : 'audio.webm')
-      const result = await intelligence<{ text: string }>('/transcribe', { form: formData, signal: controller.signal })
-      if (controller.signal.aborted || generation !== recordingGeneration.current) return
-      // result.transcript contains the English translated text
-      const transcript = result.text || ''
-      if (transcript) {
-        onChange({ description: transcript })
-      } else {
-        setSttError('Could not understand the audio. Please try again or type.')
-      }
-    } catch (error) {
-      if (controller.signal.aborted || generation !== recordingGeneration.current) return
-      console.error('Transcription error:', error)
-      setSttError('Failed to transcribe audio. Please type your issue instead.')
-    } finally {
-      if (generation === recordingGeneration.current) {
-        recordingLock.current = false
-        setIsTranscribing(false)
-      }
-    }
-  }
-
-  const handleTabChange = (tab: 'type' | 'speak') => {
-    recordingGeneration.current++
-    transcriptionRequest.current?.abort()
-    const recorder = mediaRecorderRef.current
-    if (recorder) {
-      recorder.onstop = null
-      recorder.ondataavailable = null
-      if (recorder.state !== 'inactive') recorder.stop()
-      recorder.stream.getTracks().forEach(track => track.stop())
-    }
-    recordingLock.current = false
-    setIsRecording(false)
-    setIsTranscribing(false)
-    setActiveTab(tab)
-    if (tab === 'type' && data.source !== 'text') {
-      onChange({ source: 'text' })
-    }
-    setSttError(null)
-  }
-
-  const isNextDisabled = !data.description.trim() || !data.category || !data.language || isRecording || isTranscribing
+  const isNextDisabled = !data.description.trim() || !CATEGORIES.some(category => category === data.category) || !data.language
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -189,69 +51,7 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
       </Card>
 
       <Card noPadding className={isDark ? '!bg-navy-900 !border-navy-800' : ''}>
-        {/* Tabs Header */}
-        <div className={`flex border-b ${isDark ? 'border-navy-800' : 'border-slate-100'}`}>
-          <button
-            onClick={() => handleTabChange('type')}
-            className={[
-              'flex-1 py-3 text-sm font-medium transition-colors',
-              activeTab === 'type' ? (isDark ? 'text-primary-400 border-b-2 border-primary-400' : 'text-primary border-b-2 border-primary') : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
-            ].join(' ')}
-          >
-            Type
-          </button>
-          <button
-            onClick={() => handleTabChange('speak')}
-            className={[
-              'flex-1 py-3 text-sm font-medium transition-colors',
-              activeTab === 'speak' ? (isDark ? 'text-primary-400 border-b-2 border-primary-400' : 'text-primary border-b-2 border-primary') : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
-            ].join(' ')}
-          >
-            Speak
-          </button>
-        </div>
-
         <div className="p-5 space-y-5">
-          {sttError && (
-            <div className={`p-3 text-sm rounded-lg border ${isDark ? 'bg-red-950/30 text-red-400 border-red-900/50' : 'bg-red-50 text-danger border-red-200'}`}>
-              {sttError}
-            </div>
-          )}
-
-          {activeTab === 'speak' && (
-            <div className={`flex flex-col items-center justify-center py-6 rounded-xl border ${isDark ? 'bg-navy-950 border-navy-800' : 'bg-slate-50 border-slate-100'}`}>
-              {isTranscribing ? (
-                <div className="flex flex-col items-center gap-3">
-                  <Spinner size="lg" />
-                  <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Transcribing audio...</p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-4">
-                  <button
-                    onClick={isRecording ? stopRecording : startRecording}
-                    className={[
-                      'w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg',
-                      isRecording ? 'bg-danger animate-pulse scale-110 shadow-red-200' : 'bg-primary hover:bg-primary-700 shadow-primary-200'
-                    ].join(' ')}
-                    aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-                  >
-                    {isRecording ? (
-                      <div className="w-6 h-6 bg-white rounded-sm" />
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-10 h-10">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-                      </svg>
-                    )}
-                  </button>
-                  <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {isRecording ? 'Listening... Tap to stop' : 'Tap to speak your complaint'}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="space-y-2">
             <label htmlFor="description" className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
               Description <span className="text-danger">*</span>
@@ -259,16 +59,13 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
             <textarea
               id="description"
               maxLength={4000}
-              disabled={isRecording || isTranscribing}
               rows={4}
               className={`w-full rounded-lg border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isDark ? 'bg-navy-950 border-navy-800 text-white placeholder:text-navy-500' : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
               placeholder="Describe the issue in detail..."
               value={data.description}
-              onChange={(e) => onChange({ description: e.target.value })}
+              onChange={(e) => onChange({ description: e.target.value, source: 'text' })}
             />
-            {activeTab === 'speak' && data.description && !isTranscribing && (
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>You can edit the transcribed text if needed.</p>
-            )}
+
           </div>
         </div>
       </Card>
@@ -299,7 +96,6 @@ export function Step1Description({ data, onChange, onNext }: Step1Props) {
         </div>
       </Card>
 
-      <IssueAssistant description={data.description} category={data.category} onApply={category => onChange({ category })} />
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={isNextDisabled}>

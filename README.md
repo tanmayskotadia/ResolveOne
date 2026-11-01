@@ -1,3 +1,5 @@
+> Current UI: reporting and authority pages run without the optional ML service. Text/photo suggestions, duplicate checks, estimates, insights and service-based voice transcription have been removed from the pages. Select categories manually. The ML service source is retained for future development. Supabase setup and the database migrations are still required for submission, tracking and officer access.
+
 <div align="center">
 
 # ResolveOne

@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient'
 
-export const CATEGORIES = ['Garbage/Waste', 'Road Damage/Potholes', 'Streetlights', 'Water Leakage/Supply', 'Drainage/Sewage', 'Electricity', 'Public Infrastructure', 'Other'] as const
+export { CATEGORIES } from './categories'
 export interface SuggestionResult {
   model: string
   uncertain: boolean

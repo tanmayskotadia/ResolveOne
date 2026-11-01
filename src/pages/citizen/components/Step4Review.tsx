@@ -7,7 +7,6 @@ import { useCitizen } from '../../../context/CitizenContext'
 import { useTheme } from '../../../context/ThemeContext'
 import toast from 'react-hot-toast'
 import { photoError } from '../../../lib/complaintLogic'
-import { ReportIntelligence } from '../../../components/ReportIntelligence'
 
 interface Step4Props {
   submissionId: string
@@ -160,7 +159,6 @@ export function Step4Review({ data, submissionId, onBack }: Step4Props) {
         )}
       </Card>
 
-      <ReportIntelligence data={data} />
 
       <div className="flex justify-between">
         <Button variant="secondary" onClick={onBack} disabled={isSubmitting}>Back</Button>

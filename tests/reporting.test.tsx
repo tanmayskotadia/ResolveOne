@@ -14,8 +14,6 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('../src/context/ThemeContext', () => ({ useTheme: () => ({ theme: 'light' }) }))
 vi.mock('../src/context/CitizenContext', () => ({ useCitizen: () => ({ citizenHash: 'a'.repeat(64) }) }))
-vi.mock('../src/components/IssueAssistant', () => ({ IssueAssistant: () => null }))
-vi.mock('../src/components/ReportIntelligence', () => ({ ReportIntelligence: () => null }))
 vi.mock('../src/lib/intelligence', () => ({ intelligence: mocks.intelligence, CATEGORIES: ['Road Damage/Potholes'] }))
 vi.mock('../src/lib/supabaseClient', () => ({ supabase: {
   rpc: mocks.rpc,
@@ -96,52 +94,14 @@ function DescriptionForm() {
   return <Step1Description data={value} onChange={updates => setValue(old => ({ ...old, ...updates }))} onNext={() => {}} />
 }
 
-function fakeAudio() {
-  const stopTrack = vi.fn()
-  const stream = { getTracks: () => [{ stop: stopTrack }] }
-  class Recorder {
-    state = 'inactive'
-    stream = stream
-    mimeType = 'audio/webm'
-    onstop: (() => void) | null = null
-    ondataavailable: ((event: { data: Blob }) => void) | null = null
-    start() { this.state = 'recording' }
-    stop() { this.state = 'inactive'; this.ondataavailable?.({ data: new Blob(['audio']) }); this.onstop?.() }
-  }
-  vi.stubGlobal('MediaRecorder', Recorder)
-  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: vi.fn().mockResolvedValue(stream) } })
-  return { stopTrack, stream }
-}
-
-test('switching to typing cancels transcription and preserves newly typed text', async () => {
-  const audio = fakeAudio()
-  const response = deferred<{ text: string }>()
-  mocks.intelligence.mockReturnValue(response.promise)
+test('manual reporting works without the intelligence service', () => {
   render(<DescriptionForm />)
-  fireEvent.click(screen.getByRole('button', { name: 'Speak' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
-  await screen.findByRole('button', { name: 'Stop recording' })
-  fireEvent.click(screen.getByRole('button', { name: 'Stop recording' }))
-  await waitFor(() => expect(mocks.intelligence).toHaveBeenCalled())
-  fireEvent.click(screen.getByRole('button', { name: 'Type' }))
-  fireEvent.change(screen.getByLabelText(/Description/), { target: { value: 'Keep this newly typed text' } })
-  await act(async () => { response.resolve({ text: 'Old transcription' }) })
-  expect((screen.getByLabelText(/Description/) as HTMLTextAreaElement).value).toBe('Keep this newly typed text')
-  expect(mocks.intelligence.mock.calls[0][1].signal.aborted).toBe(true)
-  expect(audio.stopTrack).toHaveBeenCalled()
-})
-
-test('leaving the description step releases the microphone', async () => {
-  const audio = fakeAudio()
-  const view = render(<DescriptionForm />)
-  fireEvent.click(screen.getByRole('button', { name: 'Speak' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
-  await screen.findByRole('button', { name: 'Stop recording' })
-  view.unmount()
-  expect(audio.stopTrack).toHaveBeenCalled()
+  expect(screen.queryByRole('button', { name: 'Speak' })).toBeNull()
+  fireEvent.change(screen.getByLabelText(/Description/), { target: { value: 'The streetlight outside the park is broken' } })
+  fireEvent.change(screen.getByLabelText(/Category/), { target: { value: 'Streetlights' } })
+  expect((screen.getByRole('button', { name: 'Next Step' }) as HTMLButtonElement).disabled).toBe(false)
   expect(mocks.intelligence).not.toHaveBeenCalled()
 })
-
 
 test('failed required photo upload keeps the report unsubmitted and allows retry', async () => {
   mocks.upload.mockResolvedValueOnce({ error: { message: 'Storage unavailable', statusCode: '503' } })

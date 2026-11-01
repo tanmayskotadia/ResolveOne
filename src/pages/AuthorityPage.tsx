@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Badge, Button, Card, Skeleton } from '../components/ui'
 import { supabase } from '../lib/supabaseClient'
 import type { ComplaintRow } from '../types/complaint'
@@ -8,8 +8,7 @@ import { AuthorityComplaintsMap } from './authority/components/AuthorityComplain
 import { AuthorityComplaintDetail } from './authority/components/AuthorityComplaintDetail'
 import { useTheme } from '../context/ThemeContext'
 
-const AuthorityInsights = lazy(() => import('../components/AuthorityInsights').then(module => ({ default: module.AuthorityInsights })))
-type ViewMode = 'list' | 'map' | 'insights'
+type ViewMode = 'list' | 'map'
 
 function exportComplaints(complaints: ComplaintRow[]) {
   const fields = ['complaint_code', 'category', 'status', 'description', 'address', 'created_at'] as const
@@ -170,14 +169,11 @@ export function AuthorityPage() {
                 </svg>
                 Map View
               </button>
-              <button type="button" aria-pressed={viewMode === 'insights'} onClick={() => setViewMode('insights')} className={`px-4 py-1.5 text-sm font-medium rounded-lg ${viewMode === 'insights' ? 'bg-primary text-white' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>✦ Insights</button>
             </Card>
 
             {/* View Content */}
             {viewMode === 'list' ? (
               <AuthorityComplaintsList complaints={complaints} onSelect={setSelectedComplaint} />
-            ) : viewMode === 'insights' ? (
-              <Suspense fallback={<div className="assist-panel" role="status">Loading insights…</div>}><AuthorityInsights complaints={complaints} onSelect={setSelectedComplaint} /></Suspense>
             ) : (
               <AuthorityComplaintsMap complaints={complaints} onSelect={setSelectedComplaint} />
             )}
