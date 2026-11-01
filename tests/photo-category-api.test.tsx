@@ -72,3 +72,12 @@ test('blocked or truncated responses abstain',async()=>{
  const {handler,providerFetch}=setup();providerFetch.mockResolvedValue(new Response(JSON.stringify({candidates:[{finishReason:'MAX_TOKENS'}]})))
  expect(await (await handler(request())).json()).toMatchObject({uncertain:true,category:null})
 })
+
+test('provider diagnostics expose only an allowlisted reason and HTTP status',async()=>{
+ const {handler,providerFetch}=setup()
+ providerFetch.mockResolvedValue(new Response(JSON.stringify({error:{message:'private-key private-photo-data',details:[{reason:'API_KEY_INVALID'}]}}),{status:400}))
+ const response=await handler(request());const body=await response.json()
+ expect(body.code).toBe('API_KEY_INVALID');expect(body.provider_status).toBe(400)
+ expect(JSON.stringify(body)).not.toMatch(/private-key|private-photo-data|test-key/)
+ expect(providerFetch).toHaveBeenCalledTimes(1)
+})

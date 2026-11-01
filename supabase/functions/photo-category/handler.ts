@@ -25,7 +25,13 @@ export function createPhotoHandler(deps:Dependencies){
     body:JSON.stringify({systemInstruction:{parts:[{text:PROMPT}]},contents:[{role:'user',parts:[{inlineData:{mimeType:body.mime_type,data:body.image}},{text:'Suggest the category based only on visible civic damage.'}]}],generationConfig:{temperature:0,maxOutputTokens:512,responseMimeType:'application/json',responseSchema:RESPONSE_SCHEMA}})
    })
    if(response.status===429)return reply({error:'The free AI quota is currently exhausted. Please select the category manually.'},429)
-   if(!response.ok)return reply({error:'Photo suggestions are temporarily unavailable. Please select the category manually.'},503)
+   if(!response.ok){
+    const failure=await response.json().catch(()=>null)
+    const allowed=['API_KEY_INVALID','API_KEY_SERVICE_BLOCKED','API_KEY_HTTP_REFERRER_BLOCKED','API_KEY_IP_ADDRESS_BLOCKED','SERVICE_DISABLED','API_KEY_EXPIRED','API_KEY_NOT_FOUND','CONSUMER_INVALID']
+    const reason=failure?.error?.details?.map((item:{reason?:string})=>item.reason).find((value:string)=>allowed.includes(value))
+    const code=reason||(response.status===404?'MODEL_UNAVAILABLE':response.status===403?'ACCESS_DENIED':'PROVIDER_ERROR')
+    return reply({error:'Photo suggestions are temporarily unavailable. Please select the category manually.',code,provider_status:response.status},503)
+   }
    const result=await response.json()
    const candidates=result.candidates
    if(!Array.isArray(candidates)||candidates.length!==1||candidates[0].finishReason!=='STOP')return reply({category:null,uncertain:true,evidence:'This photo could not be categorized reliably. Please select a category manually.'})
