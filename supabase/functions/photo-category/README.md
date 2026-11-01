@@ -13,7 +13,7 @@ In the existing Supabase project, go to Edge Functions → Secrets and set:
 
 The function uses the existing private `duplicate_quota` RPC in a separate namespaced bucket, so it requires the already-applied duplicate-following migration. No existing tables, submission functions or duplicate matching rules are changed. Supabase Edge Function limits also apply on its free plan.
 
-Deploy index.ts, handler.ts and logic.ts together with JWT verification enabled. GET returns only `{enabled, model}` without making a provider call. The photo panel is hidden when unavailable or unconfigured. Reload the photo step after configuring secrets. Revoke/remove the key or unset the confirmation flag to disable suggestions.
+Deploy index.ts, handler.ts and logic.ts together with JWT verification enabled. GET returns `{enabled, model, configuration}` with boolean key-presence and free-tier-confirmation checks only, without exposing key values or making a provider call. The photo panel is hidden when unavailable or unconfigured. Reload the photo step after configuring secrets. Revoke/remove the key or unset the confirmation flag to disable suggestions.
 
 ## Citizen flow and data
 

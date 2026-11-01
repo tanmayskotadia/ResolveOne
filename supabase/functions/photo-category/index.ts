@@ -9,4 +9,4 @@ const quota=async(req:Request)=>{
  const {data,error}=await db.rpc('duplicate_quota',{p_key:key})
  return !error&&data===true
 }
-Deno.serve(createPhotoHandler({apiKey:Deno.env.get('GEMINI_API_KEY')||'',freeTierConfirmed:Deno.env.get('GEMINI_FREE_TIER_CONFIRMED')==='true',quota,providerFetch:fetch}))
+Deno.serve(createPhotoHandler({apiKey:(Deno.env.get('GEMINI_API_KEY')||'').trim(),freeTierConfirmed:(Deno.env.get('GEMINI_FREE_TIER_CONFIRMED')||'').trim().toLowerCase()==='true',quota,providerFetch:fetch}))

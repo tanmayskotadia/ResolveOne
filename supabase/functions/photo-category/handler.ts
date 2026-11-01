@@ -6,7 +6,7 @@ export function createPhotoHandler(deps:Dependencies){
  return async(req:Request):Promise<Response>=>{
   if(req.method==='OPTIONS')return new Response('ok',{headers:cors})
   const enabled=!!deps.apiKey&&deps.freeTierConfirmed
-  if(req.method==='GET')return reply({enabled,model:MODEL})
+  if(req.method==='GET')return reply({enabled,model:MODEL,configuration:{key_present:!!deps.apiKey,free_tier_confirmed:deps.freeTierConfirmed}})
   if(req.method!=='POST')return reply({error:'Method not allowed'},405)
   if(!enabled)return reply({error:'Photo suggestions are not configured. Please choose the category manually.'},503)
   try{
